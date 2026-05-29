@@ -1,0 +1,15 @@
+# Verification artifacts (screenshots from local e2e runs)
+.verify/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Node (not used today, but guard against accidental installs)
+node_modules/

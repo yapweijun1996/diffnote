@@ -1,0 +1,56 @@
+# Usage
+
+DiffNote compares two versions of a file and produces a visual diff plus
+copyable change notes — entirely in your browser.
+
+## 1. Open the app
+
+Serve over `localhost` (a service worker requires a secure context):
+
+```bash
+python3 -m http.server 8000
+# open http://localhost:8000
+```
+
+> Opening `index.html` via `file://` works for the diff, but the PWA / offline
+> layer will not register.
+
+## 2. Compare files
+
+1. In the **sidebar**, drop or click to load a **Before** file.
+2. Load an **After** file.
+3. The visual diff, stats (added / deleted / changed blocks), and a baseline
+   set of (mock) change notes render automatically.
+
+## 3. Generate AI change notes
+
+1. Click **Generate with <provider>** in the Change Notes panel.
+2. The mock notes are replaced with AI-written Overview, Change Breakdown,
+   Commit Message, Risk Notes, and Test Suggestions.
+3. Click **Copy** next to the commit message to copy it.
+
+The provider, output language, commit length, and prompt are configured in
+**Settings** — see [CONFIGURATION.md](CONFIGURATION.md).
+
+## 4. Language
+
+Use the 🌐 switcher in the topbar (or the Settings panel) to change the
+language. One setting localizes **both** the interface and the AI-generated
+notes. Supported: English, Mandarin, Vietnamese, Malay, Japanese.
+
+## 5. Theme
+
+Toggle light / dark with the topbar button. Light is the default; your choice
+is remembered.
+
+## 6. Install as a PWA
+
+Use your browser's install prompt to install DiffNote for offline use. The
+service worker is network-first, so you always get the latest code online while
+remaining usable offline.
+
+## Keyboard & accessibility
+
+- Dropzones are focusable; <kbd>Enter</kbd> / <kbd>Space</kbd> opens the file picker.
+- All interactive elements show a visible focus ring.
+- The interface respects `prefers-reduced-motion`.

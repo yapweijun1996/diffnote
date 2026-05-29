@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f5f5f7" id="themeColorMeta" />
+  <meta name="description" content="DiffNote — local-first code diff viewer with change notes. No file leaves your browser." />
+  <title>DiffNote</title>
+
+  <!-- Blocking, inline: set theme BEFORE first paint to avoid flash.
+       Default is light; only honor a previously toggled choice. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('diffnote-theme');
+        document.documentElement.dataset.theme = (t === 'dark') ? 'dark' : 'light';
+      } catch (e) {
+        document.documentElement.dataset.theme = 'light';
+      }
+    })();
+  </script>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn menu-btn" id="menuBtn" data-icon="menu" data-i18n-attr="aria-label:topbar.menu" aria-label="Toggle sidebar" aria-expanded="false"></button>
+        <span class="brand-mark" data-icon="swap"></span>
+        <h1 class="brand-title">DiffNote</h1>
+      </div>
+      <div class="topbar-right">
+        <label class="lang-switch" data-i18n-attr="title:topbar.language" title="Language">
+          <span class="lang-icon" data-icon="globe"></span>
+          <select id="topLangSelect" aria-label="Language"></select>
+        </label>
+        <button class="icon-btn" id="resetBtn" data-icon="reset" data-i18n-attr="aria-label:topbar.reset;title:topbar.reset" aria-label="Reset" title="Reset"></button>
+        <button class="icon-btn" id="notesBtn" data-icon="notes" data-i18n-attr="aria-label:topbar.notes;title:topbar.notes" aria-label="Toggle notes" aria-pressed="true" title="Toggle notes"></button>
+        <button class="icon-btn" id="settingsBtn" data-icon="settings" data-i18n-attr="aria-label:topbar.settings;title:topbar.settings" aria-label="Settings" title="Settings"></button>
+        <button class="icon-btn" id="themeBtn" data-icon="moon" data-i18n-attr="aria-label:topbar.theme;title:topbar.theme" aria-label="Toggle theme" title="Toggle theme"></button>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <!-- SIDEBAR: inputs + stats -->
+      <aside class="sidebar" id="sidebar" aria-label="Files and options">
+        <div class="sidebar-section">
+          <h2 class="sidebar-heading" data-i18n="sidebar.files">Files</h2>
+
+          <div class="dropzone" id="dropBefore" data-side="before" tabindex="0">
+            <input type="file" id="fileBefore" class="file-input" hidden />
+            <div class="dropzone-inner">
+              <span class="dropzone-label" data-i18n="sidebar.before">Before</span>
+              <span class="dropzone-hint" data-hint data-i18n="sidebar.dropHint">Drop file or click</span>
+              <span class="dropzone-filename" data-filename hidden></span>
+            </div>
+          </div>
+
+          <div class="dropzone" id="dropAfter" data-side="after" tabindex="0">
+            <input type="file" id="fileAfter" class="file-input" hidden />
+            <div class="dropzone-inner">
+              <span class="dropzone-label" data-i18n="sidebar.after">After</span>
+              <span class="dropzone-hint" data-hint data-i18n="sidebar.dropHint">Drop file or click</span>
+              <span class="dropzone-filename" data-filename hidden></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h2 class="sidebar-heading" data-i18n="sidebar.stats">Stats</h2>
+          <div class="stats-bar" id="statsBar" hidden aria-live="polite">
+            <div class="stat stat-added"><strong id="statAdded">0</strong><span data-i18n="stat.added">added</span></div>
+            <div class="stat stat-deleted"><strong id="statDeleted">0</strong><span data-i18n="stat.deleted">deleted</span></div>
+            <div class="stat stat-blocks"><strong id="statBlocks">0</strong><span data-i18n="stat.blocks">blocks</span></div>
+          </div>
+          <p class="stats-empty muted" id="statsEmpty" data-i18n="sidebar.statsEmpty">Compare two files to see stats.</p>
+        </div>
+
+        <p class="privacy-note muted"><span class="inline-icon" data-icon="lock"></span><span data-i18n="sidebar.privacy">Local-first — files never leave your browser.</span></p>
+      </aside>
+
+      <!-- CONTENT: diff -->
+      <main class="content" aria-label="Visual diff">
+        <div class="diff-viewer" id="diffViewer">
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon" data-icon="swap"></div>
+            <p class="empty-title" data-i18n="empty.title">Compare two versions of a file</p>
+            <p class="muted" data-i18n="empty.desc">Add a Before and After file in the sidebar to see a visual diff and change notes.</p>
+          </div>
+        </div>
+      </main>
+
+      <!-- INSPECTOR: change notes -->
+      <aside class="inspector" id="inspector" aria-label="Change notes">
+        <div class="inspector-head">
+          <h2 class="inspector-title"><span data-i18n="inspector.title">Change Notes</span> <span class="badge" id="notesBadge">mock</span></h2>
+          <button class="generate-btn" id="generateBtn" hidden><span class="btn-icon" data-icon="sparkle"></span><span class="btn-label"></span></button>
+        </div>
+        <div class="ai-content" id="aiContent">
+          <p class="muted" data-i18n="inspector.placeholder">Change notes appear here after you compare two files.</p>
+        </div>
+      </aside>
+
+      <!-- Scrim for mobile drawers -->
+      <div class="scrim" id="scrim" hidden></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay" id="settingsOverlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsHeading">
+      <div class="modal-head">
+        <h2 id="settingsHeading" data-i18n="settings.title">Settings</h2>
+        <button class="icon-btn" id="settingsClose" data-i18n-attr="aria-label:settings.close" aria-label="Close settings">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <section class="setting-group">
+          <h3 class="setting-label" data-i18n="settings.provider">LLM Provider</h3>
+          <div class="provider-list" id="providerList" role="radiogroup" aria-label="LLM provider"></div>
+        </section>
+
+        <section class="setting-group" id="providerConfig">
+          <!-- endpoint / model / key fields injected by settings-ui.js -->
+        </section>
+
+        <section class="setting-group">
+          <h3 class="setting-label" data-i18n="settings.language">Change Notes Language (i18n)</h3>
+          <select class="select-input" id="langSelect" aria-label="Output language"></select>
+        </section>
+
+        <section class="setting-group">
+          <h3 class="setting-label" data-i18n="settings.commitLen">Commit Message Length</h3>
+          <div class="slider-row">
+            <input type="range" id="commitLenRange" min="20" max="500" step="5" />
+            <input type="number" id="commitLenNumber" min="20" max="500" step="1" class="num-input" />
+            <span class="unit" data-i18n="settings.chars">chars</span>
+          </div>
+        </section>
+
+        <section class="setting-group">
+          <h3 class="setting-label" data-i18n="settings.commitPrompt">Commit Message Prompt</h3>
+          <textarea id="commitPrompt" class="textarea-input" rows="3"
+            aria-label="Commit message prompt"></textarea>
+          <p class="muted field-note"><span data-i18n="settings.placeholders">Placeholders:</span> <code>{lang}</code>, <code>{maxLen}</code>.
+            <button class="btn-link" id="resetPromptBtn" type="button" data-i18n="settings.reset">Reset to default</button></p>
+        </section>
+
+        <div class="security-warn">
+          <span class="inline-icon" data-icon="alert"></span>
+          <span data-i18n="settings.security">Security: API keys are XOR-obfuscated in local storage, not encrypted.
+          The Default gateway key is recoverable from the page source — treat it as a
+          rate-limited / throwaway key and rotate it. Do not store sensitive production keys here.</span>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-secondary" id="testConnBtn" type="button" data-i18n="settings.test">Test connection</button>
+          <button class="btn-primary" id="saveSettingsBtn" type="button" data-i18n="settings.save">Save</button>
+        </div>
+        <p class="conn-status" id="connStatus" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications (top-right) -->
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+  <script src="js/xor-number-cipher.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/diff.js"></script>
+  <script src="js/ai-mock.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/llm.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/settings-ui.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/sw-register.js"></script>
+</body>
+</html>
