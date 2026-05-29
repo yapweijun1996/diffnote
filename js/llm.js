@@ -86,14 +86,17 @@
   async function callOpenAIChat(cfg, system, user) {
     const headers = { 'Content-Type': 'application/json' };
     if (cfg.apiKey) headers['Authorization'] = 'Bearer ' + cfg.apiKey;
+    const body = {
+      model: cfg.model,
+      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+      temperature: 0.2,
+    };
+    // Reasoning effort (only sent when chosen; ignored by non-reasoning models).
+    if (cfg.effort) body.reasoning_effort = cfg.effort;
     const res = await fetch(cfg.endpoint, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        model: cfg.model,
-        messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-        temperature: 0.2,
-      }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
     const data = await res.json();
@@ -102,16 +105,23 @@
     return text;
   }
 
+  // Gemini "thinking level" → thinkingBudget (tokens). '' = model default.
+  const THINKING_BUDGET = { none: 0, low: 1024, medium: 8192, high: 24576 };
+
   async function callGemini(cfg, system, user) {
     // endpoint = .../v1beta/models ; model + generateContent appended.
     const url = `${cfg.endpoint.replace(/\/$/, '')}/${cfg.model}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
+    const body = {
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: 'user', parts: [{ text: user }] }],
+    };
+    if (cfg.thinking && THINKING_BUDGET[cfg.thinking] != null) {
+      body.generationConfig = { thinkingConfig: { thinkingBudget: THINKING_BUDGET[cfg.thinking], includeThoughts: false } };
+    }
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents: [{ role: 'user', parts: [{ text: user }] }],
-      }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
     const data = await res.json();

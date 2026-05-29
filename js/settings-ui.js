@@ -62,7 +62,28 @@
     return wrap;
   }
 
+  // Localized label for a reasoning level id ('' / none / low / medium / high).
+  function levelLabel(id) {
+    const T = global.DiffNoteI18n.t;
+    return T('level.' + (id === '' ? 'default' : id));
+  }
+
+  function levelSelect(options, current, onChange) {
+    const sel = document.createElement('select');
+    sel.className = 'select-input';
+    options.forEach((id) => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = levelLabel(id);
+      sel.append(opt);
+    });
+    sel.value = current || '';
+    sel.addEventListener('change', () => onChange(sel.value));
+    return sel;
+  }
+
   function renderConfig() {
+    const T = global.DiffNoteI18n.t;
     const id = draft.provider;
     const base = S.PROVIDERS[id];
     const ov = draft.providers[id] || (draft.providers[id] = {});
@@ -74,14 +95,14 @@
     endpoint.value = ov.endpoint || base.endpoint;
     endpoint.disabled = !base.endpointEditable;
     endpoint.addEventListener('input', () => { ov.endpoint = endpoint.value; });
-    providerConfig.append(field('Endpoint', endpoint));
+    providerConfig.append(field(T('settings.endpoint'), endpoint));
 
     // Model
     const model = document.createElement('input');
     model.type = 'text';
     model.value = ov.model || base.model;
     model.addEventListener('input', () => { ov.model = model.value; });
-    providerConfig.append(field('Model', model));
+    providerConfig.append(field(T('settings.model'), model));
 
     // API key
     if (base.keyEditable) {
@@ -93,12 +114,27 @@
         // Store plaintext transiently on the draft; encrypted only at Save.
         ov._plainKey = key.value;
       });
-      providerConfig.append(field('API key', key));
+      providerConfig.append(field(T('settings.apikey'), key));
     } else {
       const note = document.createElement('p');
       note.className = 'muted field-note';
-      note.textContent = 'Uses the built-in gateway key (XOR-obfuscated in source).';
+      note.setAttribute('data-i18n', 'settings.bakedNote');
+      note.textContent = T('settings.bakedNote');
       providerConfig.append(note);
+    }
+
+    // Reasoning effort (OpenAI / responses-style providers)
+    if (base.supportsEffort) {
+      const sel = levelSelect(base.effortOptions, ov.effort != null ? ov.effort : base.effortDefault,
+        (v) => { ov.effort = v; });
+      providerConfig.append(field(T('settings.effort'), sel));
+    }
+
+    // Thinking level (Gemini)
+    if (base.supportsThinking) {
+      const sel = levelSelect(base.thinkingOptions, ov.thinking != null ? ov.thinking : base.thinkingDefault,
+        (v) => { ov.thinking = v; });
+      providerConfig.append(field(T('settings.thinking'), sel));
     }
   }
 
@@ -182,7 +218,10 @@
     if (base.bakedKeyCipher) apiKey = S.decryptKey(base.bakedKeyCipher);
     else if (ov._plainKey) apiKey = ov._plainKey;
     else apiKey = S.decryptKey(ov.keyCipher || '');
-    return { id: base.id, label: base.label, api: base.api, endpoint, model, apiKey };
+    const cfg = { id: base.id, label: base.label, api: base.api, endpoint, model, apiKey };
+    if (base.supportsEffort) cfg.effort = ov.effort != null ? ov.effort : base.effortDefault;
+    if (base.supportsThinking) cfg.thinking = ov.thinking != null ? ov.thinking : base.thinkingDefault;
+    return cfg;
   }
 
   async function test() {

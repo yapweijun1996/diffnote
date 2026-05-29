@@ -62,6 +62,10 @@
       bakedKeyCipher: DEFAULT_GW_KEY_CIPHER,
       keyEditable: false,
       endpointEditable: false,
+      // Responses API reasoning.effort — always sent (defaults to low).
+      supportsEffort: true,
+      effortOptions: ['low', 'medium', 'high'],
+      effortDefault: 'low',
     },
     gemini: {
       id: 'gemini',
@@ -71,6 +75,10 @@
       model: 'gemini-2.5-flash',
       keyEditable: true,
       endpointEditable: true,
+      // Thinking level → thinkingConfig.thinkingBudget (see llm.js).
+      supportsThinking: true,
+      thinkingOptions: ['', 'none', 'low', 'medium', 'high'],
+      thinkingDefault: '',
     },
     openai: {
       id: 'openai',
@@ -80,6 +88,10 @@
       model: 'gpt-4o-mini',
       keyEditable: true,
       endpointEditable: true,
+      // Reasoning effort → reasoning_effort (reasoning models only).
+      supportsEffort: true,
+      effortOptions: ['', 'low', 'medium', 'high'],
+      effortDefault: '',
     },
     lmstudio: {
       id: 'lmstudio',
@@ -153,7 +165,10 @@
     const keyCipher = base.bakedKeyCipher || override.keyCipher || '';
     const apiKey = decryptKey(keyCipher);
 
-    return { id: base.id, label: base.label, api: base.api, endpoint, model, apiKey };
+    const cfg = { id: base.id, label: base.label, api: base.api, endpoint, model, apiKey };
+    if (base.supportsEffort) cfg.effort = override.effort || base.effortDefault || '';
+    if (base.supportsThinking) cfg.thinking = override.thinking || base.thinkingDefault || '';
+    return cfg;
   }
 
   function getActive() {

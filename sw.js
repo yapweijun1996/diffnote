@@ -10,7 +10,7 @@
  *
  * Bump CACHE_VERSION when the offline fallback set should be refreshed.
  */
-const CACHE_VERSION = 'diffnote-v6';
+const CACHE_VERSION = 'diffnote-v8';
 const APP_SHELL = [
   './',
   './index.html',

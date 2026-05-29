@@ -15,6 +15,18 @@ All settings live in **Settings** (⚙ in the topbar) and persist to
 Each provider has an **Endpoint**, **Model**, and (except Default) an **API key**.
 Use **Test connection** to verify before saving.
 
+### Reasoning controls
+
+| Provider | Control | Sent as | Values |
+|---|---|---|---|
+| **OpenAI** | Reasoning Effort | `reasoning_effort` | Default (omit) / Low / Medium / High |
+| **Gemini** | Thinking Level | `generationConfig.thinkingConfig.thinkingBudget` | Default (model decides) / None (0) / Low (1024) / Medium (8192) / High (24576) |
+
+- **Default (empty)** omits the parameter so non-reasoning models (e.g. `gpt-4o-mini`)
+  are not affected. Set it only when using a reasoning model (o-series, gpt-5, etc.).
+- Gemini levels map to a thinking-token budget; "None" disables thinking (supported on
+  2.5 Flash, not Pro).
+
 ## Generation settings
 
 - **Change Notes Language (i18n):** English (default), Mandarin, Vietnamese,
