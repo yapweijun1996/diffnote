@@ -47,6 +47,7 @@
     'generate.btn':     { en: 'Generate with {provider}', zh: '用 {provider} 生成', vi: 'Tạo bằng {provider}', ms: 'Jana dengan {provider}', ja: '{provider} で生成' },
     'generate.loading': { en: 'Generating…', zh: '生成中…', vi: 'Đang tạo…', ms: 'Menjana…', ja: '生成中…' },
     'generate.regen':   { en: 'Regenerate', zh: '重新生成', vi: 'Tạo lại', ms: 'Jana semula', ja: '再生成' },
+    'notes.generating': { en: 'Generating change notes with AI…', zh: '正在用 AI 生成变更说明…', vi: 'Đang tạo ghi chú bằng AI…', ms: 'Menjana nota dengan AI…', ja: 'AI で変更ノートを生成中…' },
     'copy.label':       { en: 'Copy', zh: '复制', vi: 'Sao chép', ms: 'Salin', ja: 'コピー' },
     'copy.done':        { en: 'Copied ✓', zh: '已复制 ✓', vi: 'Đã sao chép ✓', ms: 'Disalin ✓', ja: 'コピー済み ✓' },
     'copy.failed':      { en: 'Copy failed', zh: '复制失败', vi: 'Sao chép thất bại', ms: 'Gagal salin', ja: 'コピー失敗' },

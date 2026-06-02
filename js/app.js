@@ -191,6 +191,7 @@
     const prevLabel = labelEl.textContent;
     labelEl.textContent = window.DiffNoteI18n.t('generate.loading');
     setBadge(active.id + ' …');
+    showLoading();
 
     try {
       const opts = {
@@ -211,9 +212,26 @@
       warn.textContent = window.DiffNoteI18n.t('error.aiFailed', { msg: err.message });
       els.aiContent.prepend(warn);
     } finally {
+      els.aiContent.classList.remove('is-generating');
       els.generateBtn.disabled = false;
       labelEl.textContent = prevLabel;
     }
+  }
+
+  // Dim the current (mock) notes and show a spinner while the LLM runs.
+  // renderNotes()/renderAI() rebuild #aiContent, clearing the banner.
+  function showLoading() {
+    if (!els.aiContent) return;
+    els.aiContent.classList.add('is-generating');
+    const banner = document.createElement('div');
+    banner.className = 'ai-loading';
+    banner.setAttribute('role', 'status');
+    const sp = document.createElement('span');
+    sp.className = 'spinner';
+    const tx = document.createElement('span');
+    tx.textContent = window.DiffNoteI18n.t('notes.generating');
+    banner.append(sp, tx);
+    els.aiContent.prepend(banner);
   }
 
   // --- AI panel builders ----------------------------------------------------
