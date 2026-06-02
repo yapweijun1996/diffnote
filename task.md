@@ -138,4 +138,5 @@ i18n coverage and responsive discoverability.
 ## 🚢 Shipped since the review (2026-06-02)
 - T0 startup gate · auto cache-version stamping · auto-generate notes · independent
   commit-message language · sticky modal header/footer · inspector merge (T2+T3) ·
-  Regenerate button · generation loading state (spinner + dimmed notes).
+  Regenerate button · generation loading state (spinner + dimmed notes) ·
+  diff toolbar: "changes only" filter + prev/next change navigation (sticky).

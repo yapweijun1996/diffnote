@@ -26,6 +26,9 @@
     statDeleted: document.getElementById('statDeleted'),
     statBlocks: document.getElementById('statBlocks'),
     diffViewer: document.getElementById('diffViewer'),
+    changesOnlyToggle: document.getElementById('changesOnlyToggle'),
+    prevDiffBtn: document.getElementById('prevDiffBtn'),
+    nextDiffBtn: document.getElementById('nextDiffBtn'),
     aiContent: document.getElementById('aiContent'),
     generateBtn: document.getElementById('generateBtn'),
     notesBadge: document.getElementById('notesBadge'),
@@ -117,9 +120,18 @@
     const table = document.createElement('table');
     table.className = 'diff-table';
 
+    let inBlock = false;
     for (const row of rows) {
       const tr = document.createElement('tr');
       tr.className = 'diff-row diff-' + row.type;
+
+      // Mark the first row of each contiguous change block for nav + separators.
+      if (row.type === 'unchanged') {
+        inBlock = false;
+      } else if (!inBlock) {
+        tr.classList.add('diff-block-start');
+        inBlock = true;
+      }
 
       const beforeNo = document.createElement('td');
       beforeNo.className = 'line-no';
@@ -144,6 +156,30 @@
     table.append(frag);
     els.diffViewer.innerHTML = '';
     els.diffViewer.append(table);
+    refreshBlocks();
+  }
+
+  // --- Change navigation + "changes only" filter ---------------------------
+  let blockEls = [];
+  let currentBlock = -1;
+
+  function refreshBlocks() {
+    blockEls = Array.from(els.diffViewer.querySelectorAll('.diff-block-start'));
+    currentBlock = -1;
+  }
+
+  function gotoBlock(step) {
+    if (!blockEls.length) return;
+    currentBlock = (currentBlock + step + blockEls.length) % blockEls.length;
+    const el = blockEls[currentBlock];
+    blockEls.forEach((b) => b.classList.remove('diff-block-active'));
+    el.classList.add('diff-block-active');
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  function applyChangesOnly() {
+    const on = els.changesOnlyToggle && els.changesOnlyToggle.checked;
+    els.diffViewer.classList.toggle('changes-only', !!on);
   }
 
   function renderAI(result) {
@@ -362,6 +398,11 @@
   wireDropzone('before');
   wireDropzone('after');
   setMode('startup'); // inputs-only until both files load
+
+  // Change navigation + "changes only" filter.
+  if (els.nextDiffBtn) els.nextDiffBtn.addEventListener('click', () => gotoBlock(1));
+  if (els.prevDiffBtn) els.prevDiffBtn.addEventListener('click', () => gotoBlock(-1));
+  if (els.changesOnlyToggle) els.changesOnlyToggle.addEventListener('change', applyChangesOnly);
 
   // --- Reset ----------------------------------------------------------------
   function reset() {

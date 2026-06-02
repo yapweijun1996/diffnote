@@ -79,6 +79,18 @@
           </div>
         </div>
 
+        <!-- DIFF toolbar: changes-only filter + change navigation. -->
+        <div class="diff-toolbar" id="diffToolbar">
+          <label class="changes-only-toggle">
+            <input type="checkbox" id="changesOnlyToggle" />
+            <span data-i18n="toolbar.changesOnly">Changes only</span>
+          </label>
+          <div class="diff-nav">
+            <button class="icon-btn" id="prevDiffBtn" data-icon="arrow-up" data-i18n-attr="aria-label:toolbar.prevDiff;title:toolbar.prevDiff" aria-label="Previous change" title="Previous change"></button>
+            <button class="icon-btn" id="nextDiffBtn" data-icon="arrow-down" data-i18n-attr="aria-label:toolbar.nextDiff;title:toolbar.nextDiff" aria-label="Next change" title="Next change"></button>
+          </div>
+        </div>
+
         <!-- DIFF: populated after both files load. -->
         <div class="diff-viewer" id="diffViewer"></div>
       </main>

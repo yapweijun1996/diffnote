@@ -284,6 +284,28 @@ body {
 .diff-deleted { background: var(--deleted-bg); }
 .diff-deleted .line-marker { color: var(--deleted-fg); }
 
+/* ---- Diff toolbar: changes-only filter + change navigation ------------- */
+.diff-toolbar {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-3); margin-bottom: var(--space-3);
+  background: var(--bg); padding-bottom: var(--space-2);
+}
+.changes-only-toggle {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-size: var(--text-sm); color: var(--text); cursor: pointer; user-select: none;
+}
+.changes-only-toggle input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+.diff-nav { display: inline-flex; gap: var(--space-1); }
+.diff-nav .icon-btn { border-color: var(--border); }
+
+/* First row of each change block: subtle separator + scroll-target highlight. */
+.diff-row.diff-block-start td { border-top: 1px solid var(--border); }
+.diff-row.diff-block-active td { box-shadow: inset 0 2px 0 0 var(--accent); }
+
+/* "Changes only": hide unchanged lines so only +/- rows remain. */
+.diff-viewer.changes-only .diff-row.diff-unchanged { display: none; }
+
 /* ---- Inspector --------------------------------------------------------- */
 .inspector {
   background: var(--surface);
@@ -524,6 +546,7 @@ body {
 
 /* Startup mode: show only the centered input card. */
 .app[data-mode="startup"] .inspector,
+.app[data-mode="startup"] #diffToolbar,
 .app[data-mode="startup"] #diffViewer { display: none; }
 .app[data-mode="startup"] .app-body { grid-template-columns: 1fr; }
 /* Topbar controls that only make sense once a diff exists. */

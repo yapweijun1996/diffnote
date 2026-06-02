@@ -32,6 +32,10 @@
     'sidebar.statsEmpty': { en: 'Compare two files to see stats.', zh: '比较两个文件以查看统计。', vi: 'So sánh hai tệp để xem thống kê.', ms: 'Bandingkan dua fail untuk lihat statistik.', ja: '2つのファイルを比較すると統計が表示されます。' },
     'sidebar.privacy':  { en: 'Local-first — files never leave your browser.', zh: '本地优先 — 文件不会离开你的浏览器。', vi: 'Ưu tiên cục bộ — tệp không rời khỏi trình duyệt.', ms: 'Setempat dahulu — fail tidak meninggalkan pelayar anda.', ja: 'ローカル優先 — ファイルはブラウザから出ません。' },
 
+    'toolbar.changesOnly': { en: 'Changes only', zh: '仅显示改动', vi: 'Chỉ thay đổi', ms: 'Perubahan sahaja', ja: '変更のみ' },
+    'toolbar.nextDiff':  { en: 'Next change', zh: '下一处改动', vi: 'Thay đổi tiếp', ms: 'Perubahan seterusnya', ja: '次の変更' },
+    'toolbar.prevDiff':  { en: 'Previous change', zh: '上一处改动', vi: 'Thay đổi trước', ms: 'Perubahan sebelum', ja: '前の変更' },
+
     'empty.title':      { en: 'Compare two versions of a file', zh: '比较一个文件的两个版本', vi: 'So sánh hai phiên bản của một tệp', ms: 'Bandingkan dua versi fail', ja: 'ファイルの2つのバージョンを比較' },
     'empty.desc':       { en: 'Add a Before and After file to see a visual diff and change notes.', zh: '添加修改前和修改后的文件，查看可视化差异和变更说明。', vi: 'Thêm tệp Trước và Sau để xem khác biệt trực quan và ghi chú thay đổi.', ms: 'Tambah fail Sebelum dan Selepas untuk lihat beza visual dan nota perubahan.', ja: '変更前・変更後のファイルを追加すると、差分と変更ノートが表示されます。' },
 
