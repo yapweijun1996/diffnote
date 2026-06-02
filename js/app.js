@@ -237,7 +237,12 @@
     if (!lastResult) return;
     const before = state.before.name || 'before';
     const after = state.after.name || 'after';
-    const text = `--- ${before}\n+++ ${after}\n\n` + buildUnifiedDiff(lastResult.rows);
+    // WYSIWYG: match the "changes only" filter — copy just the +/- lines when on.
+    const changesOnly = els.changesOnlyToggle && els.changesOnlyToggle.checked;
+    const rows = changesOnly
+      ? lastResult.rows.filter((r) => r.type !== 'unchanged')
+      : lastResult.rows;
+    const text = `--- ${before}\n+++ ${after}\n\n` + buildUnifiedDiff(rows);
     const T = window.DiffNoteI18n.t;
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
