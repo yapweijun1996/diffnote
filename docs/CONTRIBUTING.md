@@ -7,8 +7,8 @@ contributing is low-friction.
 
 - **Zero build, zero dependencies.** Plain HTML/CSS/JS served as-is. Do not add
   a bundler, framework, or `npm` runtime dependency.
-- **Local-first.** No file content is uploaded except an explicit LLM call the
-  user triggers. Keep it that way.
+- **Local-first.** The only outbound request is the AI change-note call to the
+  user's selected provider; nothing else leaves the browser. Keep it that way.
 - **Design tokens are the SSOT.** Every style value traces to a token in
   [`DESIGN.md`](../DESIGN.md). Don't hardcode colors/spacing.
 

@@ -36,7 +36,8 @@ File inputs ──FileReader──▶ DiffNoteDiff.compute() ──▶ rows + st
                  ▼                     ▼                       ▼
         renderStats()           renderDiff()           renderAI() (mock)
                                                               │
-                                          "Generate with X" click
+                                       auto-generate after each diff
+                                          (or Regenerate click)
                                                               ▼
                             DiffNoteSettings (provider + key + lang + commit opts)
                                                               ▼
@@ -44,7 +45,8 @@ File inputs ──FileReader──▶ DiffNoteDiff.compute() ──▶ rows + st
 ```
 
 - The **diff engine** is pure and unit-tested; it never touches the DOM.
-- **Mock notes** render instantly as a baseline; the real LLM call is on demand.
+- **Mock notes** render instantly as a baseline; the real LLM call then fires
+  automatically (and can be re-run via the **Regenerate** button).
 - **Keys are decrypted only at call time** inside `DiffNoteSettings.resolve()`.
 
 ## i18n model

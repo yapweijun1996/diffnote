@@ -7,17 +7,19 @@
 
 A **local-first PWA** for developers: drop in a *before* and *after* version of
 a file, read a clean visual diff, and get copyable change notes — Overview,
-Change Breakdown, Commit Message, Risk Notes, Test Suggestions — written by a
-mock generator instantly or by a real LLM on demand.
+Change Breakdown, Commit Message, Risk Notes, Test Suggestions — shown instantly
+by a mock generator and then auto-upgraded by a real LLM.
 
-> 🔒 **Local-first:** files are read in-browser with `FileReader`. Nothing is
-> uploaded except an explicit LLM request that you trigger.
+> 🔒 **Local-first:** files are read in-browser with `FileReader` and never
+> uploaded. The only outbound request is the AI change-note call, which sends
+> the computed diff to your selected provider automatically after each
+> comparison (re-run any time with **Regenerate**).
 
 ## Features
 
 - 🔀 Line-level visual diff (added / deleted / unchanged) with stats
 - 🧠 Change notes — instant mock baseline, or real LLM (Default gateway / Gemini / OpenAI / LM Studio)
-- 🌐 Full i18n — UI **and** generated notes in English, Mandarin, Vietnamese, Malay, Japanese
+- 🌐 Full i18n — UI **and** AI-generated notes in English, Mandarin, Vietnamese, Malay, Japanese (the instant mock baseline is English)
 - 🎨 Apple-inspired admin UI, light default + dark toggle, SVG icons, responsive
 - ⚙️ Configurable commit-message length & prompt
 - 📱 Installable PWA, **network-first** service worker (always latest, offline-capable)
@@ -31,8 +33,8 @@ python3 -m http.server 8000
 # open http://localhost:8000
 ```
 
-Then: load a **Before** and **After** file in the sidebar → read the diff →
-click **Generate with …** for AI notes → **Copy** the commit message.
+Then: load a **Before** and **After** file → read the diff → AI notes generate
+automatically (re-run with **Regenerate**) → **Copy** the commit message.
 
 ## Documentation
 

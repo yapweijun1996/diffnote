@@ -17,17 +17,19 @@ python3 -m http.server 8000
 
 ## 2. Compare files
 
-1. In the **sidebar**, drop or click to load a **Before** file.
-2. Load an **After** file.
+1. On the **startup screen**, drop or click to load a **Before** file.
+2. Load an **After** file. The inputs collapse into the inspector and the diff
+   takes over the screen.
 3. The visual diff, stats (added / deleted / changed blocks), and a baseline
    set of (mock) change notes render automatically.
 
 ## 3. Generate AI change notes
 
-1. Click **Generate with <provider>** in the Change Notes panel.
-2. The mock notes are replaced with AI-written Overview, Change Breakdown,
-   Commit Message, Risk Notes, and Test Suggestions.
-3. Click **Copy** next to the commit message to copy it.
+1. After the diff renders, AI change notes are generated **automatically** —
+   the mock baseline is replaced with AI-written Overview, Change Breakdown,
+   Commit Message, Risk Notes, and Test Suggestions. Click **Regenerate** in
+   the Change Notes panel to run it again.
+2. Click **Copy** next to the commit message to copy it.
 
 The provider, output language, commit length, and prompt are configured in
 **Settings** — see [CONFIGURATION.md](CONFIGURATION.md).
