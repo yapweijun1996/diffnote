@@ -93,6 +93,7 @@
     showGenerateButton();
     placeDropzones(els.sidebarDropHost); // collapse inputs into the sidebar
     setMode('diff');
+    generate(); // auto-upgrade the mock baseline to real AI notes
   }
 
   // Serialize diff rows into a unified-diff-style text for the LLM prompt.
