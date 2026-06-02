@@ -92,6 +92,7 @@
     setBadge('mock');
     placeDropzones(els.inspectorDropHost); // collapse inputs into the inspector
     setMode('diff');
+    showRegenButton();
     generate(); // auto-upgrade the mock baseline to real AI notes
   }
 
@@ -170,6 +171,13 @@
 
   function generateLabelEl() {
     return els.generateBtn.querySelector('.btn-label');
+  }
+
+  // On-demand re-run of the LLM (notes also auto-generate after each diff).
+  function showRegenButton() {
+    if (!els.generateBtn) return;
+    generateLabelEl().textContent = window.DiffNoteI18n.t('generate.regen');
+    els.generateBtn.hidden = false;
   }
 
   async function generate() {
@@ -377,7 +385,7 @@
     onLanguageChange() {
       window.DiffNoteI18n.apply(document);
       if (window.DiffNoteUI) window.DiffNoteUI.syncLangSelect();
-      if (lastResult) { renderAI(lastResult); setBadge('mock'); }
+      if (lastResult) { showRegenButton(); renderAI(lastResult); setBadge('mock'); }
     },
   };
 })();
