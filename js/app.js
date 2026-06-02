@@ -90,7 +90,6 @@
     renderDiff(result.rows);
     renderAI(result); // instant mock baseline
     setBadge('mock');
-    showGenerateButton();
     placeDropzones(els.sidebarDropHost); // collapse inputs into the sidebar
     setMode('diff');
     generate(); // auto-upgrade the mock baseline to real AI notes
@@ -171,14 +170,6 @@
 
   function generateLabelEl() {
     return els.generateBtn.querySelector('.btn-label');
-  }
-
-  function showGenerateButton() {
-    if (!els.generateBtn) return;
-    const active = DiffNoteSettings.getActive();
-    const provider = active.label.replace(/ \(.*\)$/, '');
-    generateLabelEl().textContent = window.DiffNoteI18n.t('generate.btn', { provider });
-    els.generateBtn.hidden = false;
   }
 
   async function generate() {
@@ -382,13 +373,11 @@
   // Expose a minimal API for the UI shell (reset + settings live elsewhere).
   window.DiffNoteApp = {
     reset,
-    // Settings panel calls this after a provider change so the button relabels.
-    onProviderChange() { if (lastResult) showGenerateButton(); },
     // Settings panel / topbar switcher call this to relocalize live UI.
     onLanguageChange() {
       window.DiffNoteI18n.apply(document);
       if (window.DiffNoteUI) window.DiffNoteUI.syncLangSelect();
-      if (lastResult) { showGenerateButton(); renderAI(lastResult); setBadge('mock'); }
+      if (lastResult) { renderAI(lastResult); setBadge('mock'); }
     },
   };
 })();
