@@ -64,6 +64,8 @@
     'level.medium':       { en: 'Medium', zh: '中', vi: 'Trung bình', ms: 'Sederhana', ja: '中' },
     'level.high':         { en: 'High', zh: '高', vi: 'Cao', ms: 'Tinggi', ja: '高' },
     'settings.language':  { en: 'Change Notes Language (i18n)', zh: '变更说明语言 (i18n)', vi: 'Ngôn ngữ ghi chú (i18n)', ms: 'Bahasa Nota (i18n)', ja: '変更ノートの言語 (i18n)' },
+    'settings.commitLang': { en: 'Commit Message Language', zh: '提交信息语言', vi: 'Ngôn ngữ thông điệp commit', ms: 'Bahasa Mesej Commit', ja: 'コミットメッセージの言語' },
+    'settings.sameAsNotes': { en: 'Same as change notes', zh: '与变更说明相同', vi: 'Giống ghi chú thay đổi', ms: 'Sama seperti nota perubahan', ja: '変更ノートと同じ' },
     'settings.commitLen': { en: 'Commit Message Length', zh: '提交信息长度', vi: 'Độ dài thông điệp commit', ms: 'Panjang Mesej Commit', ja: 'コミットメッセージの長さ' },
     'settings.chars':     { en: 'chars', zh: '字符', vi: 'ký tự', ms: 'aksara', ja: '文字' },
     'settings.commitPrompt': { en: 'Commit Message Prompt', zh: '提交信息提示词', vi: 'Prompt thông điệp commit', ms: 'Prompt Mesej Commit', ja: 'コミットメッセージのプロンプト' },

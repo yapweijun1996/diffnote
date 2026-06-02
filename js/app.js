@@ -196,6 +196,7 @@
     try {
       const opts = {
         languageName: DiffNoteSettings.getLanguageName(),
+        commitLanguageName: DiffNoteSettings.getCommitLanguageName(),
         commitInstruction: DiffNoteSettings.resolveCommitPrompt(),
         maxLen: DiffNoteSettings.getCommitMaxLen(),
       };

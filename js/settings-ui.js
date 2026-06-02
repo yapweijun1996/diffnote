@@ -20,6 +20,7 @@
   const testBtn = document.getElementById('testConnBtn');
   const connStatus = document.getElementById('connStatus');
   const langSelect = document.getElementById('langSelect');
+  const commitLangSelect = document.getElementById('commitLangSelect');
   const commitLenRange = document.getElementById('commitLenRange');
   const commitLenNumber = document.getElementById('commitLenNumber');
   const commitPrompt = document.getElementById('commitPrompt');
@@ -150,6 +151,20 @@
     });
     langSelect.value = draft.language || 'en';
 
+    // Commit-message language: "Same as change notes" (value '') + each language.
+    commitLangSelect.innerHTML = '';
+    const sameOpt = document.createElement('option');
+    sameOpt.value = '';
+    sameOpt.textContent = global.DiffNoteI18n.t('settings.sameAsNotes');
+    commitLangSelect.append(sameOpt);
+    S.LANGUAGES.forEach((l) => {
+      const opt = document.createElement('option');
+      opt.value = l.id;
+      opt.textContent = l.label;
+      commitLangSelect.append(opt);
+    });
+    commitLangSelect.value = draft.commitLang || '';
+
     const len = S.clampLen(draft.commitMaxLen);
     commitLenRange.value = len;
     commitLenNumber.value = len;
@@ -189,6 +204,7 @@
     commitDraftKeys();
     // Pull the latest global-setting values off the form into the draft.
     draft.language = langSelect.value;
+    draft.commitLang = commitLangSelect.value;
     draft.commitMaxLen = S.clampLen(commitLenNumber.value);
     draft.commitPrompt = commitPrompt.value.trim() || S.DEFAULT_COMMIT_PROMPT;
     const ok = S.save(draft);
@@ -250,6 +266,7 @@
   commitLenNumber.addEventListener('input', () => { draft.commitMaxLen = commitLenNumber.value; commitLenRange.value = S.clampLen(commitLenNumber.value); });
   commitLenNumber.addEventListener('change', () => setLen(commitLenNumber.value));
   langSelect.addEventListener('change', () => { draft.language = langSelect.value; });
+  commitLangSelect.addEventListener('change', () => { draft.commitLang = commitLangSelect.value; });
   commitPrompt.addEventListener('input', () => { draft.commitPrompt = commitPrompt.value; });
   resetPromptBtn.addEventListener('click', () => {
     draft.commitPrompt = S.DEFAULT_COMMIT_PROMPT;

@@ -113,6 +113,8 @@
       providers: {},
       // Generation settings
       language: LANGUAGE_DEFAULT,
+      // '' = follow the change-notes language; otherwise a LANGUAGES id.
+      commitLang: '',
       commitMaxLen: COMMIT_LEN_DEFAULT,
       commitPrompt: DEFAULT_COMMIT_PROMPT,
     };
@@ -189,11 +191,18 @@
     const lang = LANGUAGES.find((l) => l.id === (id || getLanguage()));
     return (lang || LANGUAGES[0]).name;
   }
+  // Commit-message language: independent of the notes language. '' (or an
+  // unknown id) falls back to the notes language ("same as change notes").
+  function getCommitLanguage() {
+    const id = load().commitLang;
+    return LANGUAGES.some((l) => l.id === id) ? id : getLanguage();
+  }
+  function getCommitLanguageName() { return getLanguageName(getCommitLanguage()); }
 
   /** Resolve the commit instruction with {lang}/{maxLen} substituted. */
   function resolveCommitPrompt() {
     return getCommitPrompt()
-      .replace(/\{lang\}/g, getLanguageName())
+      .replace(/\{lang\}/g, getCommitLanguageName())
       .replace(/\{maxLen\}/g, String(getCommitMaxLen()));
   }
 
@@ -216,6 +225,8 @@
     getCommitPrompt,
     getLanguage,
     getLanguageName,
+    getCommitLanguage,
+    getCommitLanguageName,
     resolveCommitPrompt,
   };
 })(typeof self !== 'undefined' ? self : this);

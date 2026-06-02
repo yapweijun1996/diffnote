@@ -20,6 +20,7 @@
   function buildSystem(opts) {
     const o = opts || {};
     const lang = o.languageName || 'English';
+    const commitLang = o.commitLanguageName || lang;
     const commit = o.commitInstruction ||
       'Write a conventional-commit style message (e.g. "fix(scope): ...").';
     const maxLen = o.maxLen || 70;
@@ -29,7 +30,7 @@
       'Respond with ONLY a JSON object (no markdown fences, no prose) with these keys:',
       '"overview" (string, 1-2 sentences),',
       '"breakdown" (array of short strings),',
-      `"commit" (string). For the commit message: ${commit} Keep it at most ${maxLen} characters.`,
+      `"commit" (string, written in ${commitLang} — this may differ from the other fields). For the commit message: ${commit} Keep it at most ${maxLen} characters.`,
       '"risks" (array of short strings),',
       '"tests" (array of short strings).',
     ].join(' ');
