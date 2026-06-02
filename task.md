@@ -106,8 +106,36 @@ i18n coverage and responsive discoverability.
   string is built outside `DiffNoteI18n.t`. Document in `docs/ARCHITECTURE.md`.
 - **Files:** `js/i18n.js`, `docs/ARCHITECTURE.md`
 
+### T6 · Skip auto-generate when files are identical ⬜
+- **Priority:** P2 · **Effort:** S
+- **Problem:** A compare with 0 added / 0 deleted still fires a real LLM call. Wasteful.
+- **Approach:** In `maybeCompare()`, skip `generate()` when `stats.added===0 && deleted===0`
+  (mock already says "identical"). Cheap cost/latency win.
+- **Files:** `js/app.js`
+
+### T7 · Auto-generate on/off toggle ⬜
+- **Priority:** P2 · **Effort:** S
+- **Problem:** Notes auto-send the diff to the provider on every compare/file swap — cost +
+  the "explicit upload only" stance. No way to opt out short of editing code.
+- **Approach:** Settings toggle "Auto-generate after diff" (default on). When off, only the
+  mock shows and the user clicks 重新生成 to call the LLM.
+- **Files:** `js/settings.js`, `index.html`, `js/settings-ui.js`, `js/app.js`, `js/i18n.js`
+
+### T8 · a11y: announce notes + localize the badge ⬜
+- **Priority:** P3 · **Effort:** S
+- **Problem:** `#aiContent` isn't `aria-live`, so screen readers don't announce when notes
+  finish. The badge text ("mock"/"default"/"mock (AI failed)") is unlocalized and cryptic.
+- **Approach:** Add `aria-live="polite"` to `#aiContent`; map badge states to i18n strings
+  (e.g. "示例" / provider name / "AI 失败").
+- **Files:** `index.html`, `js/app.js`, `js/i18n.js`
+
 ---
 
 ## ✅ Verified working (no action)
-- LCS diff correctness + stats · responsive 3-col→drawer layout · dark theme contrast ·
-  settings modal (mobile-scrollable) · local-first FileReader flow · zero console errors.
+- LCS diff correctness + stats · responsive 2-col→drawer layout · dark theme contrast ·
+  sticky-header/footer settings modal · local-first FileReader flow · zero console errors.
+
+## 🚢 Shipped since the review (2026-06-02)
+- T0 startup gate · auto cache-version stamping · auto-generate notes · independent
+  commit-message language · sticky modal header/footer · inspector merge (T2+T3) ·
+  Regenerate button · generation loading state (spinner + dimmed notes).
