@@ -34,7 +34,6 @@
 
   /* Layout */
   --topbar-h: 56px;
-  --sidebar-w: 300px;
   --inspector-w: 360px;
 
   /* Semantic color — LIGHT */
@@ -241,17 +240,39 @@ body {
 
 /* ---- Content / diff ---------------------------------------------------- */
 .content {
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   padding: var(--space-4);
   min-width: 0;
 }
+/* Diff area: change-location map (left) + scrollable diff (right). */
+.diff-main {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; gap: var(--space-2);
+}
 .diff-viewer {
+  flex: 1 1 auto; min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   overflow: auto;
-  min-height: 100%;
+}
+.diff-minimap {
+  flex: 0 0 16px; position: relative;
+  background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  overflow: hidden; cursor: pointer;
+}
+.minimap-seg { position: absolute; left: 1px; right: 1px; border-radius: 1px; }
+.minimap-added { background: var(--added-fg); }
+.minimap-deleted { background: var(--deleted-fg); }
+.minimap-viewport {
+  position: absolute; left: 0; right: 0; top: 0; min-height: 6px;
+  background: rgba(127, 127, 127, 0.28);
+  border-top: 1px solid var(--text-muted); border-bottom: 1px solid var(--text-muted);
+  pointer-events: none;
 }
 .empty-state {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -302,6 +323,8 @@ body {
   font-size: var(--text-sm); color: var(--text); cursor: pointer; user-select: none;
 }
 .changes-only-toggle input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+.diff-tools { display: inline-flex; align-items: center; gap: var(--space-2); }
+.diff-copy-btn { padding: var(--space-1) var(--space-3); }
 .diff-nav { display: inline-flex; gap: var(--space-1); }
 .diff-nav .icon-btn { border-color: var(--border); }
 
@@ -537,6 +560,7 @@ body {
 .dropzones { display: flex; flex-direction: column; gap: var(--space-3); }
 
 .startup {
+  flex: 1 1 auto;
   display: flex; align-items: center; justify-content: center;
   min-height: 100%; padding: var(--space-7) var(--space-5);
 }
@@ -553,7 +577,7 @@ body {
 /* Startup mode: show only the centered input card. */
 .app[data-mode="startup"] .inspector,
 .app[data-mode="startup"] #diffToolbar,
-.app[data-mode="startup"] #diffViewer { display: none; }
+.app[data-mode="startup"] #diffMain { display: none; }
 .app[data-mode="startup"] .app-body { grid-template-columns: 1fr; }
 /* Topbar controls that only make sense once a diff exists. */
 .app[data-mode="startup"] #notesBtn,

@@ -29,28 +29,30 @@ Following Apple Human Interface principles:
 
 ## 3. Layout — Admin Shell
 
-Three-region application shell:
+Two-region application shell, preceded by a startup gate (inputs only until both
+files load):
 
 ```
-┌────────────────────────────────────────────────────┐
-│ TOPBAR  brand · theme toggle · notes toggle · reset  │
-├──────────┬──────────────────────────┬────────────────┤
-│ SIDEBAR  │ CONTENT                  │ INSPECTOR      │
-│ Before   │ Visual diff (full width) │ Change Notes   │
-│ After    │ + stats                  │ (toggleable)   │
-│ options  │                          │                │
-└──────────┴──────────────────────────┴────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│ TOPBAR  brand · language · reset · notes · settings · theme        │
+├────────────────────────────────────┬─────────────────────────────┤
+│ CONTENT                            │ INSPECTOR                   │
+│ Visual diff (full width)           │ Files (Before/After)        │
+│                                    │ Stats                       │
+│                                    │ Change Notes (toggleable)   │
+└────────────────────────────────────┴─────────────────────────────┘
 ```
 
-- **Topbar** (`--topbar-h: 56px`): brand left; actions right (theme toggle,
-  notes toggle, reset). Sticky.
-- **Sidebar** (`--sidebar-w: 300px`): the Before/After file inputs + stats live
-  here so the sidebar *earns its space* (not empty nav). Collapses to a drawer
-  below the `md` breakpoint.
+- **Topbar** (`--topbar-h: 56px`): brand left; actions right (language switch,
+  reset, notes toggle, settings, theme toggle). Sticky.
 - **Content**: the diff viewer gets full content width (it is width-hungry,
-  more so once split-view lands in Epic 3).
-- **Inspector** (`--inspector-w: 360px`): Change Notes panel, toggleable; open
-  by default on `lg+`, overlay drawer on narrow screens.
+  more so once split-view lands in Epic 3). At startup it hosts the centered
+  file inputs; once both files load the diff takes over and the inputs collapse
+  into the inspector.
+- **Inspector** (`--inspector-w: 360px`): one panel holding Files (Before/After
+  inputs), Stats, and the toggleable Change Notes. Docked on the right at `md+`,
+  a right-side overlay drawer below the `md` breakpoint. (Files + Stats moved
+  here from the former left sidebar, so inputs have a single home.)
 
 ## 4. Color System
 
@@ -147,11 +149,14 @@ Subtle and quick; Apple ease.
 
 ## 11. Breakpoints
 
-| Name | Min width | Behavior |
+One structural `max-width` breakpoint; the docked two-column layout is the
+default at wide widths.
+
+| Name | Width | Behavior |
 |---|---|---|
-| base | 0 | single column; sidebar + inspector are drawers/overlays |
-| `md` | 768px | sidebar docked; inspector toggled overlay |
-| `lg` | 1100px | sidebar + content + inspector all docked |
+| wide (default) | ≥ 769px | content + inspector both docked (two columns) |
+| `md` | ≤ 768px | inspector becomes a right-side overlay drawer; content full width |
+| (minor) | ≤ 520px | settings provider list drops to a single column (no layout change) |
 
 ## 12. PWA Behavior — "Always Latest"
 
