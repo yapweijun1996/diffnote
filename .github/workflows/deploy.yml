@@ -30,6 +30,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Stamp a unique service-worker cache version per deploy (the commit SHA)
+      # so a new SW always activates and clients auto-reload onto the latest
+      # code. Only the uploaded artifact is changed — the repo is untouched.
+      - name: Stamp service worker cache version
+        run: |
+          sed -i "s/const CACHE_VERSION = .*/const CACHE_VERSION = 'diffnote-${{ github.sha }}';/" sw.js
+          grep "CACHE_VERSION" sw.js
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
