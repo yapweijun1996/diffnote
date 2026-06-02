@@ -33,6 +33,8 @@
     'sidebar.privacy':  { en: 'Local-first — files never leave your browser.', zh: '本地优先 — 文件不会离开你的浏览器。', vi: 'Ưu tiên cục bộ — tệp không rời khỏi trình duyệt.', ms: 'Setempat dahulu — fail tidak meninggalkan pelayar anda.', ja: 'ローカル優先 — ファイルはブラウザから出ません。' },
 
     'toolbar.changesOnly': { en: 'Changes only', zh: '仅显示改动', vi: 'Chỉ thay đổi', ms: 'Perubahan sahaja', ja: '変更のみ' },
+    'toolbar.copyDiff':  { en: 'Copy diff', zh: '复制差异', vi: 'Sao chép diff', ms: 'Salin diff', ja: '差分をコピー' },
+    'toolbar.diffCopied':{ en: 'Diff copied — paste into your AI for review', zh: '差异已复制 — 可粘贴到 AI 进行审查', vi: 'Đã sao chép diff — dán vào AI để xem xét', ms: 'Diff disalin — tampal ke AI untuk semakan', ja: '差分をコピーしました — AI に貼り付けてレビュー' },
     'toolbar.nextDiff':  { en: 'Next change', zh: '下一处改动', vi: 'Thay đổi tiếp', ms: 'Perubahan seterusnya', ja: '次の変更' },
     'toolbar.prevDiff':  { en: 'Previous change', zh: '上一处改动', vi: 'Thay đổi trước', ms: 'Perubahan sebelum', ja: '前の変更' },
 

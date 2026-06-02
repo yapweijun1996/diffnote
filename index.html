@@ -85,14 +85,22 @@
             <input type="checkbox" id="changesOnlyToggle" />
             <span data-i18n="toolbar.changesOnly">Changes only</span>
           </label>
-          <div class="diff-nav">
-            <button class="icon-btn" id="prevDiffBtn" data-icon="arrow-up" data-i18n-attr="aria-label:toolbar.prevDiff;title:toolbar.prevDiff" aria-label="Previous change" title="Previous change"></button>
-            <button class="icon-btn" id="nextDiffBtn" data-icon="arrow-down" data-i18n-attr="aria-label:toolbar.nextDiff;title:toolbar.nextDiff" aria-label="Next change" title="Next change"></button>
+          <div class="diff-tools">
+            <button class="btn-secondary diff-copy-btn" id="copyDiffBtn" type="button" data-i18n="toolbar.copyDiff">Copy diff</button>
+            <div class="diff-nav">
+              <button class="icon-btn" id="prevDiffBtn" data-icon="arrow-up" data-i18n-attr="aria-label:toolbar.prevDiff;title:toolbar.prevDiff" aria-label="Previous change" title="Previous change"></button>
+              <button class="icon-btn" id="nextDiffBtn" data-icon="arrow-down" data-i18n-attr="aria-label:toolbar.nextDiff;title:toolbar.nextDiff" aria-label="Next change" title="Next change"></button>
+            </div>
           </div>
         </div>
 
-        <!-- DIFF: populated after both files load. -->
-        <div class="diff-viewer" id="diffViewer"></div>
+        <!-- DIFF: change-location map + scrollable diff. -->
+        <div class="diff-main" id="diffMain">
+          <div class="diff-minimap" id="diffMinimap" title="Change map — click to jump">
+            <div class="minimap-viewport" id="minimapViewport"></div>
+          </div>
+          <div class="diff-viewer" id="diffViewer"></div>
+        </div>
       </main>
 
       <!-- INSPECTOR: files + stats + change notes (one place) -->

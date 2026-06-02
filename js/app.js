@@ -26,7 +26,10 @@
     statDeleted: document.getElementById('statDeleted'),
     statBlocks: document.getElementById('statBlocks'),
     diffViewer: document.getElementById('diffViewer'),
+    diffMinimap: document.getElementById('diffMinimap'),
+    minimapViewport: document.getElementById('minimapViewport'),
     changesOnlyToggle: document.getElementById('changesOnlyToggle'),
+    copyDiffBtn: document.getElementById('copyDiffBtn'),
     prevDiffBtn: document.getElementById('prevDiffBtn'),
     nextDiffBtn: document.getElementById('nextDiffBtn'),
     aiContent: document.getElementById('aiContent'),
@@ -95,6 +98,7 @@
     setBadge('mock');
     placeDropzones(els.inspectorDropHost); // collapse inputs into the inspector
     setMode('diff');
+    buildMinimap(); // after the diff area is visible so rows have height
     showRegenButton();
     generate(); // auto-upgrade the mock baseline to real AI notes
   }
@@ -159,6 +163,51 @@
     refreshBlocks();
   }
 
+  // --- Change-location map (overview) --------------------------------------
+  // Draws a compressed bar of where the file changed, plus a viewport box.
+  function buildMinimap() {
+    const map = els.diffMinimap;
+    const dv = els.diffViewer;
+    if (!map || !dv) return;
+    map.querySelectorAll('.minimap-seg').forEach((s) => s.remove());
+    const totalH = dv.scrollHeight;
+    if (totalH < 1) return;
+    const dvTop = dv.getBoundingClientRect().top;
+    const frag = document.createDocumentFragment();
+    let runType = null;
+    let runTop = 0;
+    let runBottom = 0;
+    const flush = () => {
+      if (!runType) return;
+      const seg = document.createElement('div');
+      seg.className = 'minimap-seg minimap-' + runType;
+      seg.style.top = (runTop / totalH * 100) + '%';
+      seg.style.height = Math.max(0.4, (runBottom - runTop) / totalH * 100) + '%';
+      frag.appendChild(seg);
+    };
+    dv.querySelectorAll('.diff-row').forEach((r) => {
+      const rect = r.getBoundingClientRect();
+      if (rect.height === 0) return; // hidden by "changes only"
+      const type = r.classList.contains('diff-added') ? 'added'
+        : r.classList.contains('diff-deleted') ? 'deleted' : null;
+      const top = rect.top - dvTop + dv.scrollTop;
+      if (type !== runType) { flush(); runType = type; runTop = top; runBottom = top + rect.height; }
+      else { runBottom = top + rect.height; }
+    });
+    flush();
+    map.appendChild(frag);
+    updateMinimapViewport();
+  }
+
+  function updateMinimapViewport() {
+    const vp = els.minimapViewport;
+    const dv = els.diffViewer;
+    if (!vp || !dv) return;
+    const h = dv.scrollHeight || 1;
+    vp.style.top = (dv.scrollTop / h * 100) + '%';
+    vp.style.height = Math.min(100, dv.clientHeight / h * 100) + '%';
+  }
+
   // --- Change navigation + "changes only" filter ---------------------------
   let blockEls = [];
   let currentBlock = -1;
@@ -180,6 +229,28 @@
   function applyChangesOnly() {
     const on = els.changesOnlyToggle && els.changesOnlyToggle.checked;
     els.diffViewer.classList.toggle('changes-only', !!on);
+    buildMinimap(); // row heights changed → redraw the map
+  }
+
+  // Copy the whole diff (with filenames) so it can be pasted into another AI.
+  async function copyDiff() {
+    if (!lastResult) return;
+    const before = state.before.name || 'before';
+    const after = state.after.name || 'after';
+    const text = `--- ${before}\n+++ ${after}\n\n` + buildUnifiedDiff(lastResult.rows);
+    const T = window.DiffNoteI18n.t;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.append(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      if (window.DiffNoteToast) window.DiffNoteToast.show(T('toolbar.diffCopied'), 'success');
+    } catch (e) {
+      if (window.DiffNoteToast) window.DiffNoteToast.show(T('copy.failed'), 'error');
+    }
   }
 
   function renderAI(result) {
@@ -403,6 +474,16 @@
   if (els.nextDiffBtn) els.nextDiffBtn.addEventListener('click', () => gotoBlock(1));
   if (els.prevDiffBtn) els.prevDiffBtn.addEventListener('click', () => gotoBlock(-1));
   if (els.changesOnlyToggle) els.changesOnlyToggle.addEventListener('change', applyChangesOnly);
+  if (els.copyDiffBtn) els.copyDiffBtn.addEventListener('click', copyDiff);
+
+  // Change-location map: track scroll, click-to-jump, rebuild on resize.
+  if (els.diffViewer) els.diffViewer.addEventListener('scroll', updateMinimapViewport, { passive: true });
+  if (els.diffMinimap) els.diffMinimap.addEventListener('click', (e) => {
+    const rect = els.diffMinimap.getBoundingClientRect();
+    const frac = (e.clientY - rect.top) / rect.height;
+    els.diffViewer.scrollTop = frac * els.diffViewer.scrollHeight - els.diffViewer.clientHeight / 2;
+  });
+  window.addEventListener('resize', () => { if (lastResult) buildMinimap(); });
 
   // --- Reset ----------------------------------------------------------------
   function reset() {

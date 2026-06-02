@@ -139,4 +139,6 @@ i18n coverage and responsive discoverability.
 - T0 startup gate · auto cache-version stamping · auto-generate notes · independent
   commit-message language · sticky modal header/footer · inspector merge (T2+T3) ·
   Regenerate button · generation loading state (spinner + dimmed notes) ·
-  diff toolbar: "changes only" filter + prev/next change navigation (sticky).
+  diff toolbar: "changes only" filter + prev/next change navigation (sticky) ·
+  change-location map (WinMerge-style overview + viewport + click-to-jump) ·
+  "Copy diff" button (unified diff to clipboard for AI review).
