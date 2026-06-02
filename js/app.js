@@ -17,21 +17,31 @@
 
   // --- DOM refs -------------------------------------------------------------
   const els = {
+    appRoot: document.querySelector('.app'),
+    startupZones: document.getElementById('startupZones'),
+    sidebarDropHost: document.getElementById('dropzones'),
     statsBar: document.getElementById('statsBar'),
     statsEmpty: document.getElementById('statsEmpty'),
     statAdded: document.getElementById('statAdded'),
     statDeleted: document.getElementById('statDeleted'),
     statBlocks: document.getElementById('statBlocks'),
     diffViewer: document.getElementById('diffViewer'),
-    emptyState: document.getElementById('emptyState'),
     aiContent: document.getElementById('aiContent'),
     generateBtn: document.getElementById('generateBtn'),
     notesBadge: document.getElementById('notesBadge'),
   };
 
-  // Cache the original empty-state + AI-placeholder markup so reset can restore it.
-  const EMPTY_DIFF_HTML = els.diffViewer.innerHTML;
+  // Cache the original AI-placeholder markup so reset can restore it.
   const EMPTY_AI_HTML = els.aiContent.innerHTML;
+
+  // --- Startup gate ---------------------------------------------------------
+  // The file inputs are only useful before a diff exists. At startup they sit
+  // centered (#startupZones); once both files load they collapse into the
+  // sidebar (#dropzones). Moving the SAME nodes preserves their listeners.
+  function placeDropzones(host) {
+    host.append(document.getElementById('dropBefore'), document.getElementById('dropAfter'));
+  }
+  function setMode(mode) { els.appRoot.dataset.mode = mode; }
 
   let lastResult = null; // latest diff result, for on-demand AI generation
 
@@ -81,6 +91,8 @@
     renderAI(result); // instant mock baseline
     setBadge('mock');
     showGenerateButton();
+    placeDropzones(els.sidebarDropHost); // collapse inputs into the sidebar
+    setMode('diff');
   }
 
   // Serialize diff rows into a unified-diff-style text for the LLM prompt.
@@ -100,8 +112,6 @@
   }
 
   function renderDiff(rows) {
-    if (els.emptyState) els.emptyState.remove();
-
     const frag = document.createDocumentFragment();
     const table = document.createElement('table');
     table.className = 'diff-table';
@@ -332,6 +342,7 @@
 
   wireDropzone('before');
   wireDropzone('after');
+  setMode('startup'); // inputs-only until both files load
 
   // --- Reset ----------------------------------------------------------------
   function reset() {
@@ -353,11 +364,12 @@
 
     els.statsBar.hidden = true;
     if (els.statsEmpty) els.statsEmpty.hidden = false;
-    els.diffViewer.innerHTML = EMPTY_DIFF_HTML;
+    els.diffViewer.innerHTML = '';
     els.aiContent.innerHTML = EMPTY_AI_HTML;
     // Restored markup may carry stale-language text — re-translate it.
-    window.DiffNoteI18n.apply(els.diffViewer);
     window.DiffNoteI18n.apply(els.aiContent);
+    placeDropzones(els.startupZones); // bring inputs back to the startup screen
+    setMode('startup');
     lastResult = null;
     if (els.generateBtn) els.generateBtn.hidden = true;
     setBadge('mock');

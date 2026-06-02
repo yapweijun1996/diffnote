@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <div class="app">
+  <div class="app" data-mode="startup">
     <!-- TOPBAR -->
     <header class="topbar">
       <div class="topbar-left">
@@ -51,24 +51,9 @@
       <aside class="sidebar" id="sidebar" aria-label="Files and options">
         <div class="sidebar-section">
           <h2 class="sidebar-heading" data-i18n="sidebar.files">Files</h2>
-
-          <div class="dropzone" id="dropBefore" data-side="before" tabindex="0">
-            <input type="file" id="fileBefore" class="file-input" hidden />
-            <div class="dropzone-inner">
-              <span class="dropzone-label" data-i18n="sidebar.before">Before</span>
-              <span class="dropzone-hint" data-hint data-i18n="sidebar.dropHint">Drop file or click</span>
-              <span class="dropzone-filename" data-filename hidden></span>
-            </div>
-          </div>
-
-          <div class="dropzone" id="dropAfter" data-side="after" tabindex="0">
-            <input type="file" id="fileAfter" class="file-input" hidden />
-            <div class="dropzone-inner">
-              <span class="dropzone-label" data-i18n="sidebar.after">After</span>
-              <span class="dropzone-hint" data-hint data-i18n="sidebar.dropHint">Drop file or click</span>
-              <span class="dropzone-filename" data-filename hidden></span>
-            </div>
-          </div>
+          <!-- Compact home for the dropzones once a diff is shown.
+               At startup the dropzones live in #startupZones (centered). -->
+          <div class="dropzones" id="dropzones"></div>
         </div>
 
         <div class="sidebar-section">
@@ -84,15 +69,41 @@
         <p class="privacy-note muted"><span class="inline-icon" data-icon="lock"></span><span data-i18n="sidebar.privacy">Local-first — files never leave your browser.</span></p>
       </aside>
 
-      <!-- CONTENT: diff -->
+      <!-- CONTENT: startup inputs (centered) → diff -->
       <main class="content" aria-label="Visual diff">
-        <div class="diff-viewer" id="diffViewer">
-          <div class="empty-state" id="emptyState">
+        <!-- STARTUP: shown until both files load; hosts the file inputs. -->
+        <div class="startup" id="startup">
+          <div class="startup-card">
             <div class="empty-icon" data-icon="swap"></div>
-            <p class="empty-title" data-i18n="empty.title">Compare two versions of a file</p>
-            <p class="muted" data-i18n="empty.desc">Add a Before and After file in the sidebar to see a visual diff and change notes.</p>
+            <h2 class="empty-title" data-i18n="empty.title">Compare two versions of a file</h2>
+            <p class="muted startup-desc" data-i18n="empty.desc">Add a Before and After file in the sidebar to see a visual diff and change notes.</p>
+
+            <div class="startup-zones" id="startupZones">
+              <div class="dropzone" id="dropBefore" data-side="before" tabindex="0">
+                <input type="file" id="fileBefore" class="file-input" hidden />
+                <div class="dropzone-inner">
+                  <span class="dropzone-label" data-i18n="sidebar.before">Before</span>
+                  <span class="dropzone-hint" data-hint data-i18n="sidebar.dropHint">Drop file or click</span>
+                  <span class="dropzone-filename" data-filename hidden></span>
+                </div>
+              </div>
+
+              <div class="dropzone" id="dropAfter" data-side="after" tabindex="0">
+                <input type="file" id="fileAfter" class="file-input" hidden />
+                <div class="dropzone-inner">
+                  <span class="dropzone-label" data-i18n="sidebar.after">After</span>
+                  <span class="dropzone-hint" data-hint data-i18n="sidebar.dropHint">Drop file or click</span>
+                  <span class="dropzone-filename" data-filename hidden></span>
+                </div>
+              </div>
+            </div>
+
+            <p class="privacy-note muted startup-privacy"><span class="inline-icon" data-icon="lock"></span><span data-i18n="sidebar.privacy">Local-first — files never leave your browser.</span></p>
           </div>
         </div>
+
+        <!-- DIFF: populated after both files load. -->
+        <div class="diff-viewer" id="diffViewer"></div>
       </main>
 
       <!-- INSPECTOR: change notes -->

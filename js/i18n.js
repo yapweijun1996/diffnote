@@ -33,7 +33,7 @@
     'sidebar.privacy':  { en: 'Local-first — files never leave your browser.', zh: '本地优先 — 文件不会离开你的浏览器。', vi: 'Ưu tiên cục bộ — tệp không rời khỏi trình duyệt.', ms: 'Setempat dahulu — fail tidak meninggalkan pelayar anda.', ja: 'ローカル優先 — ファイルはブラウザから出ません。' },
 
     'empty.title':      { en: 'Compare two versions of a file', zh: '比较一个文件的两个版本', vi: 'So sánh hai phiên bản của một tệp', ms: 'Bandingkan dua versi fail', ja: 'ファイルの2つのバージョンを比較' },
-    'empty.desc':       { en: 'Add a Before and After file in the sidebar to see a visual diff and change notes.', zh: '在侧栏添加修改前和修改后的文件，查看可视化差异和变更说明。', vi: 'Thêm tệp Trước và Sau ở thanh bên để xem khác biệt trực quan và ghi chú thay đổi.', ms: 'Tambah fail Sebelum dan Selepas di bar sisi untuk lihat beza visual dan nota perubahan.', ja: 'サイドバーに変更前・変更後のファイルを追加すると、差分と変更ノートが表示されます。' },
+    'empty.desc':       { en: 'Add a Before and After file to see a visual diff and change notes.', zh: '添加修改前和修改后的文件，查看可视化差异和变更说明。', vi: 'Thêm tệp Trước và Sau để xem khác biệt trực quan và ghi chú thay đổi.', ms: 'Tambah fail Sebelum dan Selepas untuk lihat beza visual dan nota perubahan.', ja: '変更前・変更後のファイルを追加すると、差分と変更ノートが表示されます。' },
 
     'inspector.title':  { en: 'Change Notes', zh: '变更说明', vi: 'Ghi chú thay đổi', ms: 'Nota Perubahan', ja: '変更ノート' },
     'inspector.placeholder': { en: 'Change notes appear here after you compare two files.', zh: '比较两个文件后，变更说明显示在这里。', vi: 'Ghi chú thay đổi hiện ở đây sau khi bạn so sánh hai tệp.', ms: 'Nota perubahan muncul di sini selepas anda bandingkan dua fail.', ja: '2つのファイルを比較すると、ここに変更ノートが表示されます。' },

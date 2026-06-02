@@ -495,6 +495,37 @@ body {
   .app-body.sidebar-open .sidebar { transform: translateX(0); }
 }
 
+/* ---- Startup gate: inputs-only on startup, compact after diff --------- */
+.dropzones { display: flex; flex-direction: column; gap: var(--space-3); }
+
+.startup {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100%; padding: var(--space-7) var(--space-5);
+}
+.startup-card {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: var(--space-3); width: 100%; max-width: 460px;
+}
+.startup-card .empty-title { margin: 0; }
+.startup-desc { margin: 0 0 var(--space-2); max-width: 380px; }
+.startup-zones { display: flex; flex-direction: column; gap: var(--space-3); width: 100%; text-align: left; }
+.startup-zones .dropzone { padding: var(--space-5); }
+.startup-privacy { margin: var(--space-2) 0 0; }
+
+/* Startup mode: show only the centered input card. */
+.app[data-mode="startup"] .sidebar,
+.app[data-mode="startup"] .inspector,
+.app[data-mode="startup"] #diffViewer { display: none; }
+.app[data-mode="startup"] .app-body { grid-template-columns: 1fr; }
+/* Topbar controls that only make sense once a diff exists. */
+.app[data-mode="startup"] .menu-btn,
+.app[data-mode="startup"] #notesBtn,
+.app[data-mode="startup"] #resetBtn { display: none; }
+
+/* Diff mode: hide the startup card; inputs ride compact in the sidebar. */
+.app[data-mode="diff"] .startup { display: none; }
+.app[data-mode="diff"] .dropzone { padding: var(--space-3); }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
