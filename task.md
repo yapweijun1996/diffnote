@@ -63,7 +63,13 @@ i18n coverage and responsive discoverability.
 
 ## 🟧 NEXT — high-value UX
 
-### T2 · Fix change-notes discoverability at 769–1100px ⬜
+### T2 · Fix change-notes discoverability at 769–1100px ✅
+- **Done 2026-06-02 (via inspector merge):** removed the left sidebar; Files + Stats now
+  sit at the top of the inspector (one place), which stays docked at ≥769px and is a
+  right-side drawer below 768px. Notes are always visible at laptop/tablet widths — the
+  hidden-drawer problem is gone. Diff reclaims the old sidebar width.
+
+<details><summary>original T2</summary>
 - **Priority:** P1 · **Effort:** S–M · **Depends on:** —
 - **Problem:** Below 1100px the inspector is an off-screen drawer; at ~1024px laptops
   users see a diff and no notes, and mock notes regenerate silently behind a closed
@@ -77,16 +83,12 @@ i18n coverage and responsive discoverability.
   - [ ] At 1024px, freshly compared files surface the notes (docked) OR a visible cue.
   - [ ] No content overlap; scrim still works on true narrow widths.
 - **Files:** `css/styles.css`, `js/ui.js`, `js/app.js`
+</details>
 
-### T3 · Sync drawer/breakpoint state across 1100px ⬜
-- **Priority:** P2 · **Effort:** S · **Depends on:** T2 (resolve together)
-- **Problem:** Resize listener only watches the 769px boundary, but docked-vs-drawer
-  flips at 1101px (`isWide`). `notes-hidden`/`notes-open`/`aria-pressed` can desync.
-- **Approach:** Add a `matchMedia('(min-width: 1101px)')` change handler that normalizes
-  classes + `aria-pressed`; consolidate with T2's chosen breakpoint.
-- **Acceptance:**
-  - [ ] Drag width across 1100px in both directions → inspector + button state stay correct.
-- **Files:** `js/ui.js`
+### T3 · Sync drawer/breakpoint state across 1100px ✅
+- **Done 2026-06-02 (obsoleted by inspector merge):** there's now a single drawer breakpoint
+  (768px) and `isWide` matches it (769px). No more 769-vs-1100 mismatch; the sidebar drawer
+  and its desync paths were removed entirely.
 
 ---
 

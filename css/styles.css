@@ -189,24 +189,15 @@ body {
 .app-body {
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: var(--sidebar-w) 1fr var(--inspector-w);
+  grid-template-columns: 1fr var(--inspector-w);
   min-height: 0;
   position: relative;
 }
 /* Inspector hidden state collapses its column */
-.app-body.notes-hidden { grid-template-columns: var(--sidebar-w) 1fr 0; }
+.app-body.notes-hidden { grid-template-columns: 1fr 0; }
 .app-body.notes-hidden .inspector { display: none; }
 
-/* ---- Sidebar ----------------------------------------------------------- */
-.sidebar {
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  padding: var(--space-4);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
+/* ---- Files / stats (now grouped at the top of the inspector) ----------- */
 .sidebar-heading {
   font-size: var(--text-xs);
   text-transform: uppercase;
@@ -215,8 +206,7 @@ body {
   font-weight: 600;
   margin: 0 0 var(--space-3);
 }
-.sidebar-section { display: flex; flex-direction: column; }
-.sidebar-section .dropzone + .dropzone { margin-top: var(--space-3); }
+.inspector-section { display: flex; flex-direction: column; margin-bottom: var(--space-5); }
 
 .dropzone {
   border: 1.5px dashed var(--border);
@@ -300,7 +290,11 @@ body {
   border-left: 1px solid var(--border);
   padding: var(--space-4);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
+/* Files + stats sit above the change notes; privacy note pins to the bottom. */
+.inspector .privacy-note { margin-top: var(--space-5); }
 .inspector-title {
   font-size: var(--text-xs);
   text-transform: uppercase; letter-spacing: 0.06em;
@@ -477,11 +471,12 @@ body {
 }
 
 /* ---- Responsive -------------------------------------------------------- */
-/* lg: full three-column (default above) */
+/* Wide/medium: two columns (diff + docked inspector). Default above.
+   The inspector (files + stats + notes) stays visible — no drawer. */
 
-@media (max-width: 1100px) {
-  /* Inspector becomes an overlay drawer on the right */
-  .app-body { grid-template-columns: var(--sidebar-w) 1fr; }
+@media (max-width: 768px) {
+  /* Narrow: single column; inspector becomes an overlay drawer on the right. */
+  .app-body { grid-template-columns: 1fr; }
   .inspector {
     position: fixed; top: var(--topbar-h); right: 0; bottom: 0;
     width: min(var(--inspector-w), 86vw); z-index: 25;
@@ -490,20 +485,7 @@ body {
     transition: transform var(--dur-base) var(--ease);
   }
   .app-body.notes-open .inspector { transform: translateX(0); }
-  .app-body.notes-hidden { grid-template-columns: var(--sidebar-w) 1fr; }
-}
-
-@media (max-width: 768px) {
-  .menu-btn { display: inline-flex; }
-  .app-body { grid-template-columns: 1fr; }
-  .sidebar {
-    position: fixed; top: var(--topbar-h); left: 0; bottom: 0;
-    width: min(var(--sidebar-w), 86vw); z-index: 25;
-    box-shadow: var(--shadow-md);
-    transform: translateX(-100%);
-    transition: transform var(--dur-base) var(--ease);
-  }
-  .app-body.sidebar-open .sidebar { transform: translateX(0); }
+  .app-body.notes-hidden { grid-template-columns: 1fr; }
 }
 
 /* ---- Startup gate: inputs-only on startup, compact after diff --------- */
@@ -524,16 +506,14 @@ body {
 .startup-privacy { margin: var(--space-2) 0 0; }
 
 /* Startup mode: show only the centered input card. */
-.app[data-mode="startup"] .sidebar,
 .app[data-mode="startup"] .inspector,
 .app[data-mode="startup"] #diffViewer { display: none; }
 .app[data-mode="startup"] .app-body { grid-template-columns: 1fr; }
 /* Topbar controls that only make sense once a diff exists. */
-.app[data-mode="startup"] .menu-btn,
 .app[data-mode="startup"] #notesBtn,
 .app[data-mode="startup"] #resetBtn { display: none; }
 
-/* Diff mode: hide the startup card; inputs ride compact in the sidebar. */
+/* Diff mode: hide the startup card; inputs ride compact in the inspector. */
 .app[data-mode="diff"] .startup { display: none; }
 .app[data-mode="diff"] .dropzone { padding: var(--space-3); }
 

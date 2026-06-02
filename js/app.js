@@ -19,7 +19,7 @@
   const els = {
     appRoot: document.querySelector('.app'),
     startupZones: document.getElementById('startupZones'),
-    sidebarDropHost: document.getElementById('dropzones'),
+    inspectorDropHost: document.getElementById('dropzones'),
     statsBar: document.getElementById('statsBar'),
     statsEmpty: document.getElementById('statsEmpty'),
     statAdded: document.getElementById('statAdded'),
@@ -90,7 +90,7 @@
     renderDiff(result.rows);
     renderAI(result); // instant mock baseline
     setBadge('mock');
-    placeDropzones(els.sidebarDropHost); // collapse inputs into the sidebar
+    placeDropzones(els.inspectorDropHost); // collapse inputs into the inspector
     setMode('diff');
     generate(); // auto-upgrade the mock baseline to real AI notes
   }

@@ -30,7 +30,6 @@
     <!-- TOPBAR -->
     <header class="topbar">
       <div class="topbar-left">
-        <button class="icon-btn menu-btn" id="menuBtn" data-icon="menu" data-i18n-attr="aria-label:topbar.menu" aria-label="Toggle sidebar" aria-expanded="false"></button>
         <span class="brand-mark" data-icon="swap"></span>
         <h1 class="brand-title">DiffNote</h1>
       </div>
@@ -47,28 +46,6 @@
     </header>
 
     <div class="app-body">
-      <!-- SIDEBAR: inputs + stats -->
-      <aside class="sidebar" id="sidebar" aria-label="Files and options">
-        <div class="sidebar-section">
-          <h2 class="sidebar-heading" data-i18n="sidebar.files">Files</h2>
-          <!-- Compact home for the dropzones once a diff is shown.
-               At startup the dropzones live in #startupZones (centered). -->
-          <div class="dropzones" id="dropzones"></div>
-        </div>
-
-        <div class="sidebar-section">
-          <h2 class="sidebar-heading" data-i18n="sidebar.stats">Stats</h2>
-          <div class="stats-bar" id="statsBar" hidden aria-live="polite">
-            <div class="stat stat-added"><strong id="statAdded">0</strong><span data-i18n="stat.added">added</span></div>
-            <div class="stat stat-deleted"><strong id="statDeleted">0</strong><span data-i18n="stat.deleted">deleted</span></div>
-            <div class="stat stat-blocks"><strong id="statBlocks">0</strong><span data-i18n="stat.blocks">blocks</span></div>
-          </div>
-          <p class="stats-empty muted" id="statsEmpty" data-i18n="sidebar.statsEmpty">Compare two files to see stats.</p>
-        </div>
-
-        <p class="privacy-note muted"><span class="inline-icon" data-icon="lock"></span><span data-i18n="sidebar.privacy">Local-first — files never leave your browser.</span></p>
-      </aside>
-
       <!-- CONTENT: startup inputs (centered) → diff -->
       <main class="content" aria-label="Visual diff">
         <!-- STARTUP: shown until both files load; hosts the file inputs. -->
@@ -106,8 +83,25 @@
         <div class="diff-viewer" id="diffViewer"></div>
       </main>
 
-      <!-- INSPECTOR: change notes -->
-      <aside class="inspector" id="inspector" aria-label="Change notes">
+      <!-- INSPECTOR: files + stats + change notes (one place) -->
+      <aside class="inspector" id="inspector" aria-label="Files, stats and change notes">
+        <section class="inspector-section">
+          <h2 class="sidebar-heading" data-i18n="sidebar.files">Files</h2>
+          <!-- Compact home for the dropzones once a diff is shown.
+               At startup the dropzones live in #startupZones (centered). -->
+          <div class="dropzones" id="dropzones"></div>
+        </section>
+
+        <section class="inspector-section">
+          <h2 class="sidebar-heading" data-i18n="sidebar.stats">Stats</h2>
+          <div class="stats-bar" id="statsBar" hidden aria-live="polite">
+            <div class="stat stat-added"><strong id="statAdded">0</strong><span data-i18n="stat.added">added</span></div>
+            <div class="stat stat-deleted"><strong id="statDeleted">0</strong><span data-i18n="stat.deleted">deleted</span></div>
+            <div class="stat stat-blocks"><strong id="statBlocks">0</strong><span data-i18n="stat.blocks">blocks</span></div>
+          </div>
+          <p class="stats-empty muted" id="statsEmpty" data-i18n="sidebar.statsEmpty">Compare two files to see stats.</p>
+        </section>
+
         <div class="inspector-head">
           <h2 class="inspector-title"><span data-i18n="inspector.title">Change Notes</span> <span class="badge" id="notesBadge">mock</span></h2>
           <button class="generate-btn" id="generateBtn" hidden><span class="btn-icon" data-icon="sparkle"></span><span class="btn-label"></span></button>
@@ -115,6 +109,8 @@
         <div class="ai-content" id="aiContent">
           <p class="muted" data-i18n="inspector.placeholder">Change notes appear here after you compare two files.</p>
         </div>
+
+        <p class="privacy-note muted"><span class="inline-icon" data-icon="lock"></span><span data-i18n="sidebar.privacy">Local-first — files never leave your browser.</span></p>
       </aside>
 
       <!-- Scrim for mobile drawers -->

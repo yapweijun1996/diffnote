@@ -10,11 +10,9 @@
 
   const root = document.documentElement;
   const appBody = document.querySelector('.app-body');
-  const sidebar = document.getElementById('sidebar');
   const scrim = document.getElementById('scrim');
   const themeBtn = document.getElementById('themeBtn');
   const notesBtn = document.getElementById('notesBtn');
-  const menuBtn = document.getElementById('menuBtn');
   const resetBtn = document.getElementById('resetBtn');
   const themeColorMeta = document.getElementById('themeColorMeta');
   const topLangSelect = document.getElementById('topLangSelect');
@@ -23,7 +21,7 @@
   // Light theme → show moon (click for dark); dark → show sun.
   const THEME_ICON = { light: 'moon', dark: 'sun' };
 
-  const isWide = () => window.matchMedia('(min-width: 1101px)').matches;
+  const isWide = () => window.matchMedia('(min-width: 769px)').matches;
 
   // ---- Theme ----------------------------------------------------------
   function applyThemeUI(theme) {
@@ -93,36 +91,26 @@
   // Expose so other modules can re-sync the topbar selector after a change.
   window.DiffNoteUI = { syncLangSelect };
 
-  // ---- Drawers / scrim ------------------------------------------------
+  // ---- Inspector drawer / scrim ---------------------------------------
   function updateScrim() {
-    const open = appBody.classList.contains('sidebar-open') || appBody.classList.contains('notes-open');
-    scrim.hidden = !open;
+    scrim.hidden = !appBody.classList.contains('notes-open');
   }
   function closeDrawers() {
-    appBody.classList.remove('sidebar-open', 'notes-open');
+    appBody.classList.remove('notes-open');
     updateScrim();
   }
   scrim.addEventListener('click', closeDrawers);
 
-  // Notes (inspector): docked toggle on wide, overlay drawer on narrow.
+  // Notes (inspector): docked collapse-toggle on wide, overlay drawer on narrow.
   notesBtn.addEventListener('click', () => {
     if (isWide()) {
       const hidden = appBody.classList.toggle('notes-hidden');
       notesBtn.setAttribute('aria-pressed', String(!hidden));
     } else {
       const open = appBody.classList.toggle('notes-open');
-      appBody.classList.remove('sidebar-open');
       notesBtn.setAttribute('aria-pressed', String(open));
       updateScrim();
     }
-  });
-
-  // Sidebar drawer (narrow only — button hidden on wide via CSS).
-  menuBtn.addEventListener('click', () => {
-    const open = appBody.classList.toggle('sidebar-open');
-    appBody.classList.remove('notes-open');
-    menuBtn.setAttribute('aria-expanded', String(open));
-    updateScrim();
   });
 
   // Reset clears comparison state (delegated to app.js).
