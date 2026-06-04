@@ -517,8 +517,20 @@
         zone.classList.remove('dragover');
       })
     );
-    zone.addEventListener('drop', (e) => {
-      const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    zone.addEventListener('drop', async (e) => {
+      const dt = e.dataTransfer;
+      if (!dt) return;
+      // Prefer a live handle (Chromium) so Refresh reflects later edits;
+      // fall back to the snapshot File when getAsFileSystemHandle is absent.
+      const item = dt.items && dt.items[0];
+      if (item && typeof item.getAsFileSystemHandle === 'function') {
+        const handle = await item.getAsFileSystemHandle();
+        if (handle && handle.kind === 'file') {
+          handleFile(side, await handle.getFile(), handle);
+          return;
+        }
+      }
+      const file = dt.files && dt.files[0];
       if (file) handleFile(side, file);
     });
   }
