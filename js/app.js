@@ -11,8 +11,8 @@
   const MAX_BYTES = 2 * 1024 * 1024; // 2MB guard for the local-first MVP.
 
   const state = {
-    before: { name: null, text: null },
-    after: { name: null, text: null },
+    before: { name: null, text: null, file: null },
+    after: { name: null, text: null, file: null },
   };
 
   // --- DOM refs -------------------------------------------------------------
@@ -30,6 +30,7 @@
     minimapViewport: document.getElementById('minimapViewport'),
     changesOnlyToggle: document.getElementById('changesOnlyToggle'),
     copyDiffBtn: document.getElementById('copyDiffBtn'),
+    refreshBtn: document.getElementById('refreshBtn'),
     prevDiffBtn: document.getElementById('prevDiffBtn'),
     nextDiffBtn: document.getElementById('nextDiffBtn'),
     aiContent: document.getElementById('aiContent'),
@@ -71,7 +72,8 @@
     const nameEl = zone.querySelector('[data-filename]');
     try {
       const text = await readFile(file);
-      state[side] = { name: file.name, text };
+      // Keep the File reference so Refresh can re-read it without re-picking.
+      state[side] = { name: file.name, text, file };
       nameEl.textContent = file.name;
       nameEl.hidden = false;
       hint.hidden = true;
@@ -256,6 +258,31 @@
     } catch (e) {
       if (window.DiffNoteToast) window.DiffNoteToast.show(T('copy.failed'), 'error');
     }
+  }
+
+  // Re-read the already-picked files and re-run the diff. Manual on purpose:
+  // the browser holds a snapshot of each File, so the user edits + saves on
+  // disk, then clicks Refresh. Re-renders the diff + instant mock baseline
+  // only — the costly LLM call stays behind the Regenerate button.
+  async function refresh() {
+    if (!state.before.file || !state.after.file) return;
+    const T = window.DiffNoteI18n.t;
+    try {
+      state.before.text = await readFile(state.before.file);
+      state.after.text = await readFile(state.after.file);
+    } catch (e) {
+      // An edited-on-disk file can invalidate the old File reference.
+      if (window.DiffNoteToast) window.DiffNoteToast.show(T('error.refreshStale'), 'error');
+      return;
+    }
+    const result = DiffNoteDiff.compute(state.before.text, state.after.text);
+    lastResult = result;
+    renderStats(result.stats);
+    renderDiff(result.rows);
+    renderAI(result); // refresh the instant mock baseline
+    setBadge('mock');
+    buildMinimap();
+    if (window.DiffNoteToast) window.DiffNoteToast.show(T('toolbar.refreshed'), 'success');
   }
 
   function renderAI(result) {
@@ -480,6 +507,7 @@
   if (els.prevDiffBtn) els.prevDiffBtn.addEventListener('click', () => gotoBlock(-1));
   if (els.changesOnlyToggle) els.changesOnlyToggle.addEventListener('change', applyChangesOnly);
   if (els.copyDiffBtn) els.copyDiffBtn.addEventListener('click', copyDiff);
+  if (els.refreshBtn) els.refreshBtn.addEventListener('click', refresh);
 
   // Change-location map: track scroll, click-to-jump, rebuild on resize.
   if (els.diffViewer) els.diffViewer.addEventListener('scroll', updateMinimapViewport, { passive: true });
@@ -492,8 +520,8 @@
 
   // --- Reset ----------------------------------------------------------------
   function reset() {
-    state.before = { name: null, text: null };
-    state.after = { name: null, text: null };
+    state.before = { name: null, text: null, file: null };
+    state.after = { name: null, text: null, file: null };
 
     ['dropBefore', 'dropAfter'].forEach((id) => {
       const zone = document.getElementById(id);

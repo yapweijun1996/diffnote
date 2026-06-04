@@ -34,6 +34,8 @@
 
     'toolbar.changesOnly': { en: 'Changes only', zh: '仅显示改动', vi: 'Chỉ thay đổi', ms: 'Perubahan sahaja', ja: '変更のみ' },
     'toolbar.copyDiff':  { en: 'Copy diff', zh: '复制差异', vi: 'Sao chép diff', ms: 'Salin diff', ja: '差分をコピー' },
+    'toolbar.refresh':   { en: 'Refresh', zh: '重新比对', vi: 'Làm mới', ms: 'Segar semula', ja: '再比較' },
+    'toolbar.refreshed': { en: 'Re-compared with the latest saved files', zh: '已用最新保存的文件重新比对', vi: 'Đã so sánh lại với tệp đã lưu mới nhất', ms: 'Dibanding semula dengan fail tersimpan terkini', ja: '最新の保存ファイルで再比較しました' },
     'toolbar.diffCopied':{ en: 'Diff copied — paste into your AI for review', zh: '差异已复制 — 可粘贴到 AI 进行审查', vi: 'Đã sao chép diff — dán vào AI để xem xét', ms: 'Diff disalin — tampal ke AI untuk semakan', ja: '差分をコピーしました — AI に貼り付けてレビュー' },
     'toolbar.nextDiff':  { en: 'Next change', zh: '下一处改动', vi: 'Thay đổi tiếp', ms: 'Perubahan seterusnya', ja: '次の変更' },
     'toolbar.prevDiff':  { en: 'Previous change', zh: '上一处改动', vi: 'Thay đổi trước', ms: 'Perubahan sebelum', ja: '前の変更' },
@@ -93,6 +95,7 @@
     'error.aiFailed':     { en: 'AI generation failed: {msg}', zh: 'AI 生成失败：{msg}', vi: 'Tạo AI thất bại: {msg}', ms: 'Penjanaan AI gagal: {msg}', ja: 'AI 生成に失敗：{msg}' },
     'error.fileTooLarge': { en: 'File too large ({kb} KB). Limit is 2 MB.', zh: '文件过大（{kb} KB）。上限为 2 MB。', vi: 'Tệp quá lớn ({kb} KB). Giới hạn 2 MB.', ms: 'Fail terlalu besar ({kb} KB). Had 2 MB.', ja: 'ファイルが大きすぎます（{kb} KB）。上限は2 MBです。' },
     'error.fileRead':     { en: 'Could not read file.', zh: '无法读取文件。', vi: 'Không thể đọc tệp.', ms: 'Tidak dapat baca fail.', ja: 'ファイルを読み取れません。' },
+    'error.refreshStale': { en: 'Could not re-read the file — drag the amended file in again.', zh: '无法重新读取文件 — 请把修改后的文件重新拖进来。', vi: 'Không thể đọc lại tệp — kéo tệp đã sửa vào lại.', ms: 'Tidak dapat baca semula fail — seret semula fail yang dipinda.', ja: 'ファイルを再読み込みできません — 修正後のファイルを再度ドラッグしてください。' },
   };
 
   function lang() {
