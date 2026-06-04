@@ -10,9 +10,15 @@
 
   const MAX_BYTES = 2 * 1024 * 1024; // 2MB guard for the local-first MVP.
 
+  // `handle` is a FileSystemFileHandle when the file was opened via the File
+  // System Access API (Chrome/Edge/Opera). It re-reads live disk content, so
+  // Refresh actually reflects edits. Drag/drop + <input> only give a `file`
+  // snapshot that goes stale once the file is edited on disk.
+  const supportsFsAccess = typeof window.showOpenFilePicker === 'function';
+
   const state = {
-    before: { name: null, text: null, file: null },
-    after: { name: null, text: null, file: null },
+    before: { name: null, text: null, file: null, handle: null },
+    after: { name: null, text: null, file: null, handle: null },
   };
 
   // --- DOM refs -------------------------------------------------------------
@@ -66,14 +72,14 @@
     });
   }
 
-  async function handleFile(side, file) {
+  async function handleFile(side, file, handle = null) {
     const zone = document.getElementById(side === 'before' ? 'dropBefore' : 'dropAfter');
     const hint = zone.querySelector('[data-hint]');
     const nameEl = zone.querySelector('[data-filename]');
     try {
       const text = await readFile(file);
-      // Keep the File reference so Refresh can re-read it without re-picking.
-      state[side] = { name: file.name, text, file };
+      // Keep the handle (live disk) when we have one, else the File snapshot.
+      state[side] = { name: file.name, text, file, handle };
       nameEl.textContent = file.name;
       nameEl.hidden = false;
       hint.hidden = true;
@@ -261,17 +267,22 @@
   }
 
   // Re-read the already-picked files and re-run the diff. Manual on purpose:
-  // the browser holds a snapshot of each File, so the user edits + saves on
-  // disk, then clicks Refresh. Re-renders the diff + instant mock baseline
-  // only — the costly LLM call stays behind the Regenerate button.
+  // the user edits + saves on disk, then clicks Refresh. Re-renders the diff +
+  // instant mock baseline only — the costly LLM call stays behind Regenerate.
+  // A handle (File System Access) reads live disk content; a bare File is a
+  // snapshot that throws once edited, so we tell the user to re-drop it.
   async function refresh() {
     if (!state.before.file || !state.after.file) return;
     const T = window.DiffNoteI18n.t;
     try {
-      state.before.text = await readFile(state.before.file);
-      state.after.text = await readFile(state.after.file);
+      for (const side of ['before', 'after']) {
+        const s = state[side];
+        const file = s.handle ? await s.handle.getFile() : s.file;
+        s.text = await readFile(file);
+        s.file = file;
+      }
     } catch (e) {
-      // An edited-on-disk file can invalidate the old File reference.
+      // A bare-File reference goes stale once the file is edited on disk.
       if (window.DiffNoteToast) window.DiffNoteToast.show(T('error.refreshStale'), 'error');
       return;
     }
@@ -461,6 +472,19 @@
     }
   }
 
+  // Open via the File System Access picker so we keep a live handle. Must run
+  // inside the user-gesture handler. Falls back to the <input> elsewhere.
+  async function openWithPicker(side) {
+    try {
+      const [handle] = await window.showOpenFilePicker({ multiple: false });
+      const file = await handle.getFile();
+      await handleFile(side, file, handle);
+    } catch (err) {
+      if (err && err.name === 'AbortError') return; // user dismissed the dialog
+      if (window.DiffNoteToast) window.DiffNoteToast.show(window.DiffNoteI18n.t('error.fileRead'), 'error');
+    }
+  }
+
   // --- Wiring ---------------------------------------------------------------
   function wireDropzone(side) {
     const zoneId = side === 'before' ? 'dropBefore' : 'dropAfter';
@@ -468,11 +492,12 @@
     const zone = document.getElementById(zoneId);
     const input = document.getElementById(inputId);
 
-    zone.addEventListener('click', () => input.click());
+    const open = () => (supportsFsAccess ? openWithPicker(side) : input.click());
+    zone.addEventListener('click', open);
     zone.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        input.click();
+        open();
       }
     });
 
@@ -520,8 +545,8 @@
 
   // --- Reset ----------------------------------------------------------------
   function reset() {
-    state.before = { name: null, text: null, file: null };
-    state.after = { name: null, text: null, file: null };
+    state.before = { name: null, text: null, file: null, handle: null };
+    state.after = { name: null, text: null, file: null, handle: null };
 
     ['dropBefore', 'dropAfter'].forEach((id) => {
       const zone = document.getElementById(id);
