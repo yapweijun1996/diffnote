@@ -112,11 +112,32 @@
   }
 
   // Serialize diff rows into a unified-diff-style text for the LLM prompt.
+  // Unchanged lines are collapsed to at most CONTEXT lines around each change
+  // block so historical file content doesn't pollute the LLM's context.
   function buildUnifiedDiff(rows) {
-    return rows.map((r) => {
+    const CONTEXT = 3;
+    const changed = rows.map((r) => r.type !== 'unchanged');
+    const keep = changed.map((_, i) => {
+      if (changed[i]) return true;
+      for (let d = 1; d <= CONTEXT; d++) {
+        if (changed[i - d] || changed[i + d]) return true;
+      }
+      return false;
+    });
+
+    const lines = [];
+    let ellipsis = false;
+    for (let i = 0; i < rows.length; i++) {
+      if (!keep[i]) {
+        if (!ellipsis) { lines.push('...'); ellipsis = true; }
+        continue;
+      }
+      ellipsis = false;
+      const r = rows[i];
       const sign = r.type === 'added' ? '+' : r.type === 'deleted' ? '-' : ' ';
-      return sign + r.text;
-    }).join('\n');
+      lines.push(sign + r.text);
+    }
+    return lines.join('\n');
   }
 
   function renderStats(stats) {

@@ -27,6 +27,7 @@
     return [
       'You are a senior software engineer writing concise change notes for a code diff.',
       `Write ALL human-readable text fields in ${lang}.`,
+      'Lines beginning with a space are unchanged context — base your notes ONLY on lines beginning with "+" or "-".',
       'Respond with ONLY a JSON object (no markdown fences, no prose) with these keys:',
       '"overview" (string, 1-2 sentences),',
       '"breakdown" (array of short strings),',
