@@ -286,7 +286,8 @@ body {
 
 .diff-table {
   border-collapse: collapse;
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   line-height: 1.45;
@@ -299,7 +300,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 .line-marker { width: 1%; text-align: center; color: var(--text-muted); user-select: none; }
-.line-code { white-space: pre-wrap; word-break: break-word; width: 100%; }
+.line-code { white-space: pre; width: 100%; }
 .diff-added { background: var(--added-bg); }
 .diff-added .line-marker { color: var(--added-fg); }
 .diff-deleted { background: var(--deleted-bg); }
