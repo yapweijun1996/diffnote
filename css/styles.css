@@ -59,7 +59,7 @@ html[data-theme="dark"] {
   --surface-2: #3a3a3c;
   --border: rgba(255,255,255,.12);
   --text: #f5f5f7;
-  --text-muted: #98989d;
+  --text-muted: #b5b5ba;
   --accent: #0060c8;          /* fill (white text passes AA: 5.99:1) */
   --accent-hover: #0052ad;
   --accent-text: #5cabff;     /* accent-colored text on dark surface: 5.79:1 */
@@ -302,8 +302,9 @@ body {
   flex: 0 0 16px; position: relative;
   background: var(--surface-2);
   border: 1px solid var(--border); border-radius: var(--radius-sm);
-  overflow: hidden; cursor: pointer;
+  overflow: hidden; cursor: grab; touch-action: none; user-select: none;
 }
+.diff-minimap.is-dragging { cursor: grabbing; }
 .minimap-seg { position: absolute; left: 1px; right: 1px; border-radius: 1px; }
 .minimap-added { background: var(--added-fg); }
 .minimap-deleted { background: var(--deleted-fg); }
@@ -452,7 +453,7 @@ body {
   animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-/* Dim the stale (mock) notes while the real ones are generating. */
+/* Dim the stale local notes while the real ones are generating. */
 .ai-content.is-generating > :not(.ai-loading) { opacity: 0.4; }
 @media (prefers-reduced-motion: reduce) {
   .spinner { animation: none; }
@@ -617,7 +618,8 @@ body {
 /* Startup mode: show only the centered input card. */
 .app[data-mode="startup"] .inspector,
 .app[data-mode="startup"] #diffToolbar,
-.app[data-mode="startup"] #diffMain { display: none; }
+.app[data-mode="startup"] #diffMain,
+.app[data-mode="startup"] #diffHeader { display: none; }
 .app[data-mode="startup"] .app-body { grid-template-columns: 1fr; }
 /* Topbar controls that only make sense once a diff exists. */
 .app[data-mode="startup"] #notesBtn,
@@ -629,4 +631,260 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+}
+
+/* ---- UI/UX V2 ---------------------------------------------------------- */
+/* The diff is the primary surface; the inspector is a compact 3:1 dock. */
+.app-body {
+  grid-template-columns: minmax(0, 3fr) minmax(280px, 1fr);
+}
+
+.diff-toolbar {
+  align-items: center;
+  flex-wrap: wrap;
+  padding-bottom: var(--space-3);
+}
+.segmented-control {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+.segment-btn {
+  min-height: 40px;
+  border: 0;
+  border-right: 1px solid var(--accent);
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  color: var(--accent-text);
+  font: 500 var(--text-sm) var(--font-sans);
+  cursor: pointer;
+}
+.segment-btn:last-child { border-right: 0; }
+.segment-btn:hover { background: var(--surface-2); }
+.segment-btn.is-selected {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.diff-tools { flex-wrap: wrap; }
+.diff-nav { align-items: center; gap: var(--space-2); }
+.diff-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  white-space: nowrap;
+}
+.diff-nav-btn svg { width: 15px; height: 15px; }
+.diff-nav-btn:disabled { opacity: .55; cursor: default; }
+.diff-position {
+  min-width: 58px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.diff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.diff-file-flow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.diff-file-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.diff-file-kicker {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.diff-file-name code {
+  display: block;
+  max-width: min(32vw, 280px);
+  overflow: hidden;
+  color: var(--text);
+  font: 600 var(--text-sm) var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.diff-file-arrow { color: var(--accent-text); font-size: var(--text-lg); }
+.diff-header-stats {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-4);
+}
+.header-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+.header-stat strong { font-size: var(--text-base); font-variant-numeric: tabular-nums; }
+.header-stat-added strong { color: var(--added-fg); }
+.header-stat-deleted strong { color: var(--deleted-fg); }
+.header-stat-blocks strong { color: var(--accent-text); }
+
+.diff-viewer {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.diff-row.diff-block-start td { border-top: 2px solid var(--border); }
+.diff-row.diff-block-active td { box-shadow: inset 0 2px 0 0 var(--accent); }
+
+.inspector { min-width: 0; gap: var(--space-3); }
+.inspector-files { flex: 0 0 auto; margin-bottom: 0; }
+.inspector-analysis {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin-bottom: 0;
+}
+.inspector-head { gap: var(--space-3); }
+.inspector-title { margin: 0; }
+.inspector-tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: thin;
+}
+.inspector-tab {
+  flex: 1 0 auto;
+  min-height: 40px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  color: var(--text-muted);
+  font: 500 var(--text-sm) var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.inspector-tab:hover { color: var(--text); background: var(--surface-2); }
+.inspector-tab.is-selected {
+  border-bottom-color: var(--accent);
+  color: var(--accent-text);
+}
+.inspector-tab-panels {
+  min-height: 0;
+  overflow-y: auto;
+  padding-top: var(--space-4);
+}
+.inspector-tab-panel { min-width: 0; }
+.inspector-stats {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-4);
+}
+.inspector-stats .sidebar-heading { margin-bottom: var(--space-2); }
+.stats-bar { gap: var(--space-5); }
+.analysis-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  color: var(--accent-text);
+  font-size: var(--text-sm);
+}
+.inspector-tab-panels.is-generating .ai-content { opacity: .45; }
+.inspector-tab-panels.is-generating .inspector-stats { opacity: .65; }
+.inspector .privacy-note { flex: 0 0 auto; margin-top: 0; }
+.ai-section { overflow-wrap: anywhere; }
+.ai-section li { overflow-wrap: anywhere; }
+.commit-row { min-width: 0; }
+.commit-msg { min-width: 0; overflow-wrap: anywhere; }
+.copy-btn { min-height: 40px; }
+
+@media (max-width: 1100px) {
+  .diff-file-name code { max-width: 24vw; }
+  .diff-header-stats { gap: var(--space-3); }
+}
+
+/* Tablet: prioritize the diff and reveal the inspector as a drawer. */
+@media (min-width: 769px) and (max-width: 900px) {
+  .app-body { grid-template-columns: 1fr; }
+  .inspector {
+    position: fixed;
+    top: var(--topbar-h);
+    right: 0;
+    bottom: 0;
+    z-index: 25;
+    width: min(420px, 88vw);
+    box-shadow: var(--shadow-md);
+    transform: translateX(100%);
+    transition: transform var(--dur-base) var(--ease);
+  }
+  .app-body.notes-open .inspector { transform: translateX(0); }
+  .app-body.notes-hidden { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .app-body { grid-template-columns: 1fr; }
+  .diff-toolbar { justify-content: space-between; }
+  .diff-tools { justify-content: flex-end; }
+  .inspector { width: min(var(--inspector-w), 86vw); }
+}
+
+/* Mobile: a bottom sheet keeps the diff visible while notes are open. */
+@media (max-width: 520px) {
+  .topbar { padding-left: var(--space-2); padding-right: var(--space-2); }
+  .topbar-left, .topbar-right { gap: 4px; }
+  .brand-title { display: none; }
+  .lang-switch { flex: 0 1 100px; width: 100px; padding-left: 6px; padding-right: 4px; }
+  .lang-switch select { width: 72px; max-width: 72px; font-size: var(--text-xs); }
+  .topbar-right { min-width: 0; }
+
+  .content { padding: var(--space-3); }
+  .diff-toolbar { align-items: stretch; }
+  .segmented-control { flex: 1 1 100%; }
+  .segment-btn { flex: 1 1 50%; }
+  .diff-tools { width: 100%; justify-content: space-between; }
+  .diff-nav-btn { padding-left: var(--space-2); padding-right: var(--space-2); }
+  .diff-nav-btn span:last-child { display: none; }
+  .diff-copy-btn { padding-left: var(--space-2); padding-right: var(--space-2); }
+  .diff-header { align-items: flex-start; flex-direction: column; }
+  .diff-file-flow { width: 100%; justify-content: space-between; }
+  .diff-file-name { max-width: calc(50% - 18px); }
+  .diff-file-name code { max-width: 100%; }
+  .diff-header-stats { width: 100%; justify-content: space-between; }
+  .inspector {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: min(78vh, 620px);
+    border-top: 1px solid var(--border);
+    border-left: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    transform: translateY(100%);
+  }
+  .app-body.notes-open .inspector { transform: translateY(0); }
+  .inspector-tab-panels { padding-bottom: env(safe-area-inset-bottom, 0px); }
 }

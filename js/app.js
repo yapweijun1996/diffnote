@@ -2,7 +2,7 @@
  * DiffNote — main application controller.
  *
  * Wires file inputs (drag/drop + click), runs the diff engine, renders the
- * visual diff, fills the mock AI panel, and handles the commit-message copy
+ * visual diff, fills the analysis panels, and handles the commit-message copy
  * action. All reading happens in-browser via FileReader; nothing is uploaded.
  */
 (function () {
@@ -24,6 +24,7 @@
   // --- DOM refs -------------------------------------------------------------
   const els = {
     appRoot: document.querySelector('.app'),
+    inspector: document.getElementById('inspector'),
     startupZones: document.getElementById('startupZones'),
     inspectorDropHost: document.getElementById('dropzones'),
     statsBar: document.getElementById('statsBar'),
@@ -31,21 +32,38 @@
     statAdded: document.getElementById('statAdded'),
     statDeleted: document.getElementById('statDeleted'),
     statBlocks: document.getElementById('statBlocks'),
+    headerBeforeName: document.getElementById('headerBeforeName'),
+    headerAfterName: document.getElementById('headerAfterName'),
+    diffHeaderStats: document.getElementById('diffHeaderStats'),
+    headerStatAdded: document.getElementById('headerStatAdded'),
+    headerStatDeleted: document.getElementById('headerStatDeleted'),
+    headerStatBlocks: document.getElementById('headerStatBlocks'),
     diffViewer: document.getElementById('diffViewer'),
     diffMinimap: document.getElementById('diffMinimap'),
     minimapViewport: document.getElementById('minimapViewport'),
-    changesOnlyToggle: document.getElementById('changesOnlyToggle'),
+    allLinesBtn: document.getElementById('allLinesBtn'),
+    changesOnlyBtn: document.getElementById('changesOnlyBtn'),
     copyDiffBtn: document.getElementById('copyDiffBtn'),
     refreshBtn: document.getElementById('refreshBtn'),
     prevDiffBtn: document.getElementById('prevDiffBtn'),
     nextDiffBtn: document.getElementById('nextDiffBtn'),
+    diffPosition: document.getElementById('diffPosition'),
     aiContent: document.getElementById('aiContent'),
+    risksContent: document.getElementById('risksContent'),
+    testsContent: document.getElementById('testsContent'),
+    commitContent: document.getElementById('commitContent'),
+    inspectorPanels: document.getElementById('inspectorTabPanels'),
+    analysisLoading: document.getElementById('analysisLoading'),
     generateBtn: document.getElementById('generateBtn'),
-    notesBadge: document.getElementById('notesBadge'),
   };
 
-  // Cache the original AI-placeholder markup so reset can restore it.
-  const EMPTY_AI_HTML = els.aiContent.innerHTML;
+  // Cache the original placeholders so reset can restore each tab in place.
+  const EMPTY_PANEL_HTML = {
+    summary: els.aiContent.innerHTML,
+    risks: els.risksContent.innerHTML,
+    tests: els.testsContent.innerHTML,
+    commit: els.commitContent.innerHTML,
+  };
 
   // --- Startup gate ---------------------------------------------------------
   // The file inputs are only useful before a diff exists. At startup they sit
@@ -56,7 +74,13 @@
   }
   function setMode(mode) { els.appRoot.dataset.mode = mode; }
 
+  function renderFileMeta() {
+    if (els.headerBeforeName) els.headerBeforeName.textContent = state.before.name || '—';
+    if (els.headerAfterName) els.headerAfterName.textContent = state.after.name || '—';
+  }
+
   let lastResult = null; // latest diff result, for on-demand AI generation
+  let changesOnly = false;
 
   // --- File reading ---------------------------------------------------------
   function readFile(file) {
@@ -85,6 +109,7 @@
       hint.hidden = true;
       zone.classList.remove('has-error');
       zone.classList.add('has-file');
+      renderFileMeta();
       maybeCompare();
     } catch (err) {
       // Story 3 AC: error shown when a file cannot be read.
@@ -102,13 +127,12 @@
     lastResult = result;
     renderStats(result.stats);
     renderDiff(result.rows);
-    renderAI(result); // instant mock baseline
-    setBadge('mock');
+    renderAI(result); // local baseline keeps the app useful offline
     placeDropzones(els.inspectorDropHost); // collapse inputs into the inspector
     setMode('diff');
     buildMinimap(); // after the diff area is visible so rows have height
     showRegenButton();
-    generate(); // auto-upgrade the mock baseline to real AI notes
+    generate(); // auto-upgrade the local baseline to real AI notes
   }
 
   // Serialize diff rows into a unified-diff-style text for the LLM prompt.
@@ -144,6 +168,10 @@
     els.statAdded.textContent = stats.added;
     els.statDeleted.textContent = stats.deleted;
     els.statBlocks.textContent = stats.blocks;
+    if (els.headerStatAdded) els.headerStatAdded.textContent = stats.added;
+    if (els.headerStatDeleted) els.headerStatDeleted.textContent = stats.deleted;
+    if (els.headerStatBlocks) els.headerStatBlocks.textContent = stats.blocks;
+    if (els.diffHeaderStats) els.diffHeaderStats.hidden = false;
     els.statsBar.hidden = false;
     if (els.statsEmpty) els.statsEmpty.hidden = true;
   }
@@ -237,6 +265,18 @@
     vp.style.height = Math.min(100, dv.clientHeight / h * 100) + '%';
   }
 
+  // Map a minimap pointer position to the same centered jump used by click.
+  function scrollToMinimapPosition(clientY) {
+    const map = els.diffMinimap;
+    const dv = els.diffViewer;
+    if (!map || !dv) return;
+    const rect = map.getBoundingClientRect();
+    const fraction = Math.max(0, Math.min(1, (clientY - rect.top) / (rect.height || 1)));
+    const maxScrollTop = Math.max(0, dv.scrollHeight - dv.clientHeight);
+    const target = fraction * dv.scrollHeight - dv.clientHeight / 2;
+    dv.scrollTop = Math.max(0, Math.min(maxScrollTop, target));
+  }
+
   // --- Change navigation + "changes only" filter ---------------------------
   let blockEls = [];
   let currentBlock = -1;
@@ -244,6 +284,17 @@
   function refreshBlocks() {
     blockEls = Array.from(els.diffViewer.querySelectorAll('.diff-block-start'));
     currentBlock = -1;
+    updateBlockNav();
+  }
+
+  function updateBlockNav() {
+    if (els.diffPosition) {
+      const position = currentBlock < 0 ? '—' : String(currentBlock + 1);
+      els.diffPosition.textContent = blockEls.length ? `${position} of ${blockEls.length}` : '—';
+    }
+    const disabled = blockEls.length === 0;
+    if (els.prevDiffBtn) els.prevDiffBtn.disabled = disabled;
+    if (els.nextDiffBtn) els.nextDiffBtn.disabled = disabled;
   }
 
   function gotoBlock(step) {
@@ -252,12 +303,21 @@
     const el = blockEls[currentBlock];
     blockEls.forEach((b) => b.classList.remove('diff-block-active'));
     el.classList.add('diff-block-active');
+    updateBlockNav();
     el.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 
-  function applyChangesOnly() {
-    const on = els.changesOnlyToggle && els.changesOnlyToggle.checked;
-    els.diffViewer.classList.toggle('changes-only', !!on);
+  function applyChangesOnly(on) {
+    changesOnly = !!on;
+    els.diffViewer.classList.toggle('changes-only', changesOnly);
+    if (els.allLinesBtn) {
+      els.allLinesBtn.classList.toggle('is-selected', !changesOnly);
+      els.allLinesBtn.setAttribute('aria-pressed', String(!changesOnly));
+    }
+    if (els.changesOnlyBtn) {
+      els.changesOnlyBtn.classList.toggle('is-selected', changesOnly);
+      els.changesOnlyBtn.setAttribute('aria-pressed', String(changesOnly));
+    }
     buildMinimap(); // row heights changed → redraw the map
   }
 
@@ -267,7 +327,6 @@
     const before = state.before.name || 'before';
     const after = state.after.name || 'after';
     // WYSIWYG: match the "changes only" filter — copy just the +/- lines when on.
-    const changesOnly = els.changesOnlyToggle && els.changesOnlyToggle.checked;
     const rows = changesOnly
       ? lastResult.rows.filter((r) => r.type !== 'unchanged')
       : lastResult.rows;
@@ -289,7 +348,7 @@
 
   // Re-read the already-picked files and re-run the diff. Manual on purpose:
   // the user edits + saves on disk, then clicks Refresh. Re-renders the diff +
-  // instant mock baseline only — the costly LLM call stays behind Regenerate.
+  // instant local baseline only — the costly LLM call stays behind Regenerate.
   // A handle (File System Access) reads live disk content; a bare File is a
   // snapshot that throws once edited, so we tell the user to re-drop it.
   async function refresh() {
@@ -311,8 +370,7 @@
     lastResult = result;
     renderStats(result.stats);
     renderDiff(result.rows);
-    renderAI(result); // refresh the instant mock baseline
-    setBadge('mock');
+    renderAI(result); // refresh the local baseline
     buildMinimap();
     if (window.DiffNoteToast) window.DiffNoteToast.show(T('toolbar.refreshed'), 'success');
   }
@@ -322,22 +380,21 @@
     renderNotes(DiffNoteAI.generate(result, state.after.name || state.before.name, maxLen));
   }
 
-  // Render a structured notes object (shared by mock + real LLM).
+  // Render one structured notes object into the four focused inspector tabs.
   function renderNotes(ai) {
     const T = window.DiffNoteI18n.t;
     els.aiContent.innerHTML = '';
     els.aiContent.append(
       section(T('notes.overview'), textBlock(ai.overview)),
-      section(T('notes.breakdown'), list(ai.breakdown)),
-      commitSection(ai.commit),
-      section(T('notes.risks'), list(ai.risks)),
-      section(T('notes.tests'), list(ai.tests))
+      section(T('notes.keyChanges'), list(ai.breakdown)),
+      section(T('notes.highestRisk'), list([ai.risks[0] || 'No notable risk identified.']))
     );
-  }
-
-  // --- Badge + on-demand AI generation -------------------------------------
-  function setBadge(text) {
-    if (els.notesBadge) els.notesBadge.textContent = text;
+    els.risksContent.innerHTML = '';
+    els.risksContent.append(section(T('notes.risks'), list(ai.risks)));
+    els.testsContent.innerHTML = '';
+    els.testsContent.append(section(T('notes.tests'), list(ai.tests)));
+    els.commitContent.innerHTML = '';
+    els.commitContent.append(commitSection(ai.commit));
   }
 
   function generateLabelEl() {
@@ -347,7 +404,7 @@
   // On-demand re-run of the LLM (notes also auto-generate after each diff).
   function showRegenButton() {
     if (!els.generateBtn) return;
-    generateLabelEl().textContent = window.DiffNoteI18n.t('generate.regen');
+    generateLabelEl().textContent = window.DiffNoteI18n.t('generate.regenAnalysis');
     els.generateBtn.hidden = false;
   }
 
@@ -361,7 +418,6 @@
     const labelEl = generateLabelEl();
     const prevLabel = labelEl.textContent;
     labelEl.textContent = window.DiffNoteI18n.t('generate.loading');
-    setBadge(active.id + ' …');
     showLoading();
 
     try {
@@ -373,36 +429,28 @@
       };
       const notes = await DiffNoteLLM.generateNotes(active, diffText, fileName, opts);
       renderNotes(notes);
-      setBadge(active.id);
     } catch (err) {
-      // Fall back to mock + surface the error; never leave a broken panel.
+      // Fall back to the local baseline + surface the error; never leave a broken panel.
       renderAI(lastResult);
-      setBadge('mock (AI failed)');
       const warn = document.createElement('p');
       warn.className = 'ai-error';
       warn.textContent = window.DiffNoteI18n.t('error.aiFailed', { msg: err.message });
       els.aiContent.prepend(warn);
     } finally {
-      els.aiContent.classList.remove('is-generating');
+      if (els.inspectorPanels) els.inspectorPanels.classList.remove('is-generating');
+      if (els.analysisLoading) els.analysisLoading.hidden = true;
       els.generateBtn.disabled = false;
       labelEl.textContent = prevLabel;
     }
   }
 
-  // Dim the current (mock) notes and show a spinner while the LLM runs.
-  // renderNotes()/renderAI() rebuild #aiContent, clearing the banner.
+  // Dim the current notes and show a spinner while the LLM runs.
   function showLoading() {
-    if (!els.aiContent) return;
-    els.aiContent.classList.add('is-generating');
-    const banner = document.createElement('div');
-    banner.className = 'ai-loading';
-    banner.setAttribute('role', 'status');
-    const sp = document.createElement('span');
-    sp.className = 'spinner';
-    const tx = document.createElement('span');
-    tx.textContent = window.DiffNoteI18n.t('notes.generating');
-    banner.append(sp, tx);
-    els.aiContent.prepend(banner);
+    if (els.inspectorPanels) els.inspectorPanels.classList.add('is-generating');
+    if (els.analysisLoading) {
+      els.analysisLoading.hidden = false;
+      window.DiffNoteI18n.apply(els.analysisLoading);
+    }
   }
 
   // --- AI panel builders ----------------------------------------------------
@@ -563,17 +611,79 @@
   // Change navigation + "changes only" filter.
   if (els.nextDiffBtn) els.nextDiffBtn.addEventListener('click', () => gotoBlock(1));
   if (els.prevDiffBtn) els.prevDiffBtn.addEventListener('click', () => gotoBlock(-1));
-  if (els.changesOnlyToggle) els.changesOnlyToggle.addEventListener('change', applyChangesOnly);
+  if (els.allLinesBtn) els.allLinesBtn.addEventListener('click', () => applyChangesOnly(false));
+  if (els.changesOnlyBtn) els.changesOnlyBtn.addEventListener('click', () => applyChangesOnly(true));
   if (els.copyDiffBtn) els.copyDiffBtn.addEventListener('click', copyDiff);
   if (els.refreshBtn) els.refreshBtn.addEventListener('click', refresh);
 
-  // Change-location map: track scroll, click-to-jump, rebuild on resize.
+  // Change-location map: track scroll, click/drag-to-jump, rebuild on resize.
   if (els.diffViewer) els.diffViewer.addEventListener('scroll', updateMinimapViewport, { passive: true });
-  if (els.diffMinimap) els.diffMinimap.addEventListener('click', (e) => {
-    const rect = els.diffMinimap.getBoundingClientRect();
-    const frac = (e.clientY - rect.top) / rect.height;
-    els.diffViewer.scrollTop = frac * els.diffViewer.scrollHeight - els.diffViewer.clientHeight / 2;
-  });
+  if (els.diffMinimap) {
+    let minimapPointerId = null;
+    let minimapDragStartY = 0;
+    let minimapHasMoved = false;
+    let suppressNextMinimapClick = false;
+    let minimapDragEndX = 0;
+    let minimapDragEndY = 0;
+    let suppressClickTimer = null;
+
+    els.diffMinimap.addEventListener('pointerdown', (e) => {
+      if (!e.isPrimary || (e.button !== 0 && e.button !== -1)) return;
+      minimapPointerId = e.pointerId;
+      minimapDragStartY = e.clientY;
+      minimapHasMoved = false;
+      els.diffMinimap.classList.add('is-dragging');
+      els.diffMinimap.setPointerCapture(e.pointerId);
+    });
+
+    els.diffMinimap.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== minimapPointerId) return;
+      if (!minimapHasMoved && Math.abs(e.clientY - minimapDragStartY) <= 3) return;
+      minimapHasMoved = true;
+      e.preventDefault();
+      scrollToMinimapPosition(e.clientY);
+    });
+
+    const finishMinimapPointer = (e, suppressClick) => {
+      if (e.pointerId !== minimapPointerId) return;
+      if (suppressClick && minimapHasMoved) {
+        suppressNextMinimapClick = true;
+        minimapDragEndX = e.clientX;
+        minimapDragEndY = e.clientY;
+        window.clearTimeout(suppressClickTimer);
+        suppressClickTimer = window.setTimeout(() => {
+          suppressNextMinimapClick = false;
+          suppressClickTimer = null;
+        }, 500);
+      }
+      if (els.diffMinimap.hasPointerCapture(e.pointerId)) {
+        els.diffMinimap.releasePointerCapture(e.pointerId);
+      }
+      els.diffMinimap.classList.remove('is-dragging');
+      minimapPointerId = null;
+      minimapHasMoved = false;
+    };
+
+    els.diffMinimap.addEventListener('pointerup', (e) => finishMinimapPointer(e, true));
+    els.diffMinimap.addEventListener('pointercancel', (e) => finishMinimapPointer(e, false));
+    els.diffMinimap.addEventListener('lostpointercapture', (e) => finishMinimapPointer(e, false));
+
+    els.diffMinimap.addEventListener('click', (e) => {
+      const isSyntheticDragClick = suppressNextMinimapClick
+        && Math.abs(e.clientX - minimapDragEndX) <= 6
+        && Math.abs(e.clientY - minimapDragEndY) <= 6;
+      if (isSyntheticDragClick) {
+        suppressNextMinimapClick = false;
+        window.clearTimeout(suppressClickTimer);
+        suppressClickTimer = null;
+        return;
+      }
+      suppressNextMinimapClick = false;
+      window.clearTimeout(suppressClickTimer);
+      suppressClickTimer = null;
+      scrollToMinimapPosition(e.clientY);
+    });
+  }
   window.addEventListener('resize', () => { if (lastResult) buildMinimap(); });
 
   // --- Reset ----------------------------------------------------------------
@@ -595,16 +705,23 @@
     document.getElementById('fileAfter').value = '';
 
     els.statsBar.hidden = true;
+    if (els.diffHeaderStats) els.diffHeaderStats.hidden = true;
     if (els.statsEmpty) els.statsEmpty.hidden = false;
+    renderFileMeta();
     els.diffViewer.innerHTML = '';
-    els.aiContent.innerHTML = EMPTY_AI_HTML;
-    // Restored markup may carry stale-language text — re-translate it.
-    window.DiffNoteI18n.apply(els.aiContent);
+    applyChangesOnly(false);
+    els.aiContent.innerHTML = EMPTY_PANEL_HTML.summary;
+    els.risksContent.innerHTML = EMPTY_PANEL_HTML.risks;
+    els.testsContent.innerHTML = EMPTY_PANEL_HTML.tests;
+    els.commitContent.innerHTML = EMPTY_PANEL_HTML.commit;
+    window.DiffNoteI18n.apply(els.inspector);
+    if (els.analysisLoading) els.analysisLoading.hidden = true;
+    if (els.inspectorPanels) els.inspectorPanels.classList.remove('is-generating');
+    refreshBlocks();
     placeDropzones(els.startupZones); // bring inputs back to the startup screen
     setMode('startup');
     lastResult = null;
     if (els.generateBtn) els.generateBtn.hidden = true;
-    setBadge('mock');
   }
 
   if (els.generateBtn) els.generateBtn.addEventListener('click', generate);
@@ -616,7 +733,7 @@
     onLanguageChange() {
       window.DiffNoteI18n.apply(document);
       if (window.DiffNoteUI) window.DiffNoteUI.syncLangSelect();
-      if (lastResult) { showRegenButton(); renderAI(lastResult); setBadge('mock'); }
+      if (lastResult) { showRegenButton(); renderAI(lastResult); }
     },
   };
 })();

@@ -20,15 +20,30 @@ python3 -m http.server 8000
 1. On the **startup screen**, drop or click to load a **Before** file.
 2. Load an **After** file. The inputs collapse into the inspector and the diff
    takes over the screen.
-3. The visual diff, stats (added / deleted / changed blocks), and a baseline
-   set of (mock) change notes render automatically.
+3. The visual diff, compact file context, stats (added / deleted / changed
+   blocks), and a local baseline of change notes render automatically.
+
+The diff is the primary workspace. On a wide screen the inspector occupies a
+compact right column; use its **Summary**, **Risks**, **Tests**, and **Commit**
+tabs to focus the information you need. On tablet and mobile, the inspector
+opens from the topbar as a drawer or bottom sheet.
+
+Use **All lines** / **Changes only** to control the visible rows. The diff
+header shows the Before → After filenames and the current statistics. Use
+**Previous** / **Next** to cycle through change blocks; the position indicator
+shows the current block (for example, `2 of 3`).
+
+For long files, use the change map at the left of the diff: click a position to
+jump there, or press and hold on the map and drag vertically to scrub through
+the raw lines. The code area itself keeps its normal text selection and
+horizontal scrolling behavior.
 
 ## 3. Generate AI change notes
 
 1. After the diff renders, AI change notes are generated **automatically** —
-   the mock baseline is replaced with AI-written Overview, Change Breakdown,
-   Commit Message, Risk Notes, and Test Suggestions. Click **Regenerate** in
-   the Change Notes panel to run it again.
+   the local baseline is replaced with AI-written Summary, Risks, Tests, and
+   Commit content. Click **Regenerate analysis** in the Change Notes panel to
+   run it again.
 2. Click **Copy** next to the commit message to copy it.
 
 The provider, output language, commit length, and prompt are configured in
@@ -65,5 +80,9 @@ keep any in-progress file selection or unsaved UI state in mind before choosing
 ## Keyboard & accessibility
 
 - Dropzones are focusable; <kbd>Enter</kbd> / <kbd>Space</kbd> opens the file picker.
+- The inspector tabs support <kbd>Left</kbd> / <kbd>Right</kbd>, <kbd>Home</kbd>,
+  and <kbd>End</kbd> keyboard navigation.
+- The minimap supports click and press-hold drag navigation; its viewport stays
+  synchronized with the diff scroll position.
 - All interactive elements show a visible focus ring.
 - The interface respects `prefers-reduced-motion`.

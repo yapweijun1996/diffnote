@@ -22,7 +22,41 @@
   // Light theme → show moon (click for dark); dark → show sun.
   const THEME_ICON = { light: 'moon', dark: 'sun' };
 
-  const isWide = () => window.matchMedia('(min-width: 769px)').matches;
+  const isWide = () => window.matchMedia('(min-width: 901px)').matches;
+
+  // ---- Inspector tabs --------------------------------------------------
+  const inspectorTabs = Array.from(document.querySelectorAll('[data-inspector-tab]'));
+  const inspectorPanels = inspectorTabs
+    .map((tab) => document.getElementById(tab.getAttribute('aria-controls')))
+    .filter(Boolean);
+
+  function setInspectorTab(name, focus = false) {
+    inspectorTabs.forEach((tab) => {
+      const selected = tab.dataset.inspectorTab === name;
+      tab.classList.toggle('is-selected', selected);
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+      if (selected && focus) tab.focus();
+    });
+    inspectorPanels.forEach((panel) => {
+      panel.hidden = panel.id !== name + 'Panel';
+    });
+  }
+
+  inspectorTabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => setInspectorTab(tab.dataset.inspectorTab));
+    tab.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' && e.key !== 'Home' && e.key !== 'End') return;
+      e.preventDefault();
+      let next = index;
+      if (e.key === 'ArrowRight') next = (index + 1) % inspectorTabs.length;
+      if (e.key === 'ArrowLeft') next = (index - 1 + inspectorTabs.length) % inspectorTabs.length;
+      if (e.key === 'Home') next = 0;
+      if (e.key === 'End') next = inspectorTabs.length - 1;
+      setInspectorTab(inspectorTabs[next].dataset.inspectorTab, true);
+    });
+  });
+  setInspectorTab('summary');
 
   // ---- Theme ----------------------------------------------------------
   function applyThemeUI(theme) {
@@ -189,5 +223,5 @@
   });
 
   // Clean up drawer state when crossing back to wide layout.
-  window.matchMedia('(min-width: 769px)').addEventListener('change', closeDrawers);
+  window.matchMedia('(min-width: 901px)').addEventListener('change', closeDrawers);
 })();

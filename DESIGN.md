@@ -37,22 +37,22 @@ files load):
 │ TOPBAR  brand · language · reset · notes · settings · theme        │
 ├────────────────────────────────────┬─────────────────────────────┤
 │ CONTENT                            │ INSPECTOR                   │
-│ Visual diff (full width)           │ Files (Before/After)        │
-│                                    │ Stats                       │
-│                                    │ Change Notes (toggleable)   │
+│ Diff toolbar + file context        │ Files (Before/After)        │
+│ Visual diff + change map           │ Summary | Risks | Tests |   │
+│                                    │ Commit                      │
 └────────────────────────────────────┴─────────────────────────────┘
 ```
 
 - **Topbar** (`--topbar-h: 56px`): brand left; actions right (language switch,
   reset, notes toggle, settings, theme toggle). Sticky.
-- **Content**: the diff viewer gets full content width (it is width-hungry,
-  more so once split-view lands in Epic 3). At startup it hosts the centered
-  file inputs; once both files load the diff takes over and the inputs collapse
-  into the inspector.
-- **Inspector** (`--inspector-w: 360px`): one panel holding Files (Before/After
-  inputs), Stats, and the toggleable Change Notes. Docked on the right at `md+`,
-  a right-side overlay drawer below the `md` breakpoint. (Files + Stats moved
-  here from the former left sidebar, so inputs have a single home.)
+- **Content**: the diff is the primary surface. Its toolbar provides the
+  All lines / Changes only segmented control and Previous / position / Next
+  block navigation. A compact Before → After context row keeps filenames and
+  stats next to the diff. The viewer owns vertical and horizontal scrolling.
+- **Inspector** (`--inspector-w: 360px`): compact file inputs plus four focused
+  analysis tabs: Summary, Risks, Tests, and Commit. It is docked at a 3:1
+  diff-to-inspector ratio on wide screens, a right drawer on tablet, and a
+  bottom sheet on mobile.
 
 ## 4. Color System
 
@@ -68,7 +68,7 @@ Semantic tokens (resolve to theme-specific raw values):
 | `--surface-2` | `#f0f0f3` | `#3a3a3c` | inset / hover |
 | `--border` | `rgba(0,0,0,.10)` | `rgba(255,255,255,.12)` | hairlines |
 | `--text` | `#1d1d1f` | `#f5f5f7` | primary text |
-| `--text-muted` | `#6e6e73` | `#98989d` | secondary text |
+| `--text-muted` | `#6e6e73` | `#b5b5ba` | secondary text |
 | `--accent` | `#0066cc` | `#0060c8` | primary fill (button bg), focus ring — white text passes AA |
 | `--accent-text` | `#0066cc` | `#5cabff` | accent-colored *text* (headings/brand) — passes AA on surface |
 | `--accent-contrast` | `#ffffff` | `#ffffff` | text on accent fill |
@@ -129,7 +129,10 @@ Line-height: 1.5 body, 1.45 code.
 - **Theme toggle**: icon button, sun (light) / moon (dark).
 - **Diff row**: monospace table; before/after line-number columns; marker column; added/deleted bg tokens.
 - **Inspector section**: `--text-xs` uppercase accent heading + body.
-- **Badge**: `--surface-2`, `--text-xs`, pill.
+- **Segmented control**: two real buttons with `aria-pressed`; the selected
+  mode uses the system accent.
+- **Inspector tabs**: a keyboard-operable tablist with one visible panel at a
+  time. The Commit panel keeps a copy action beside the generated message.
 
 ## 9. Motion
 
@@ -145,18 +148,19 @@ Subtle and quick; Apple ease.
 - **Error**: in-dropzone message (file unreadable / too large), `has-error` styling.
 - **Success/feedback**: copy button → "Copied ✓" for 1.5s.
 - **Focus**: visible 2px `--accent` ring via `:focus-visible` on all interactive elements.
-- (Loading state reserved — diff is instant for MVP sizes.)
+- **Loading**: the analysis loading status appears above the active tab while
+  existing note content is dimmed; the diff remains usable.
 
 ## 11. Breakpoints
 
-One structural `max-width` breakpoint; the docked two-column layout is the
-default at wide widths.
+The diff-first layout uses wide, tablet, and mobile structural breakpoints.
 
 | Name | Width | Behavior |
 |---|---|---|
-| wide (default) | ≥ 769px | content + inspector both docked (two columns) |
-| `md` | ≤ 768px | inspector becomes a right-side overlay drawer; content full width |
-| (minor) | ≤ 520px | settings provider list drops to a single column (no layout change) |
+| wide (default) | ≥ 901px | content + inspector docked at a 3:1 ratio |
+| tablet | 769–900px | content full width; inspector is a right-side drawer |
+| mobile | ≤ 768px | single-column diff; inspector is a drawer |
+| compact mobile | ≤ 520px | inspector becomes a bottom sheet; controls wrap |
 
 ## 12. PWA Behavior — "Always Latest"
 
@@ -182,5 +186,11 @@ when a release is ready, the user controls when the waiting release takes over.
 - AA contrast (≥4.5:1) for text in both themes.
 - `:focus-visible` ring on every interactive element.
 - Drawers/toggles reflect state via `aria-expanded` / `aria-pressed`.
+- Segmented controls expose selected state with `aria-pressed`; the inspector
+  tablist exposes `aria-selected`, `aria-controls`, and Left/Right/Home/End
+  keyboard navigation.
+- The minimap supports click and primary-pointer drag with a visible
+  grab/grabbing affordance; the code area retains native text selection and
+  horizontal scrolling.
 - `prefers-reduced-motion` respected.
 - Keyboard: dropzones focusable + Enter/Space activate; toggles are real buttons.

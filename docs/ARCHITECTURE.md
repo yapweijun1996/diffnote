@@ -11,13 +11,13 @@ via `<script>` tags; modules communicate through small globals on `window`.
 | `js/xor-number-cipher.js` | `XORNumberCipher` | Vendored XOR cipher (key obfuscation). |
 | `js/icons.js` | `DiffNoteIcons` | Inline SVG icon set; injects into `[data-icon]`. |
 | `js/diff.js` | `DiffNoteDiff` | LCS line-diff engine + stats. |
-| `js/ai-mock.js` | `DiffNoteAI` | Deterministic mock change-note generator. |
+| `js/ai-mock.js` | `DiffNoteAI` | Deterministic local baseline change-note generator. |
 | `js/settings.js` | `DiffNoteSettings` | Provider registry, XOR key store, generation settings. |
 | `js/i18n.js` | `DiffNoteI18n` | Translation dictionary + `t()` / `apply()`. |
 | `js/llm.js` | `DiffNoteLLM` | Provider adapters; structured note generation. |
-| `js/ui.js` | `DiffNoteUI`, `DiffNoteToast` | Theme, drawers, toast, topbar language switch, update banner. |
+| `js/ui.js` | `DiffNoteUI`, `DiffNoteToast` | Theme, inspector tabs/drawers, toast, topbar language switch, update banner. |
 | `js/settings-ui.js` | — | Settings modal controller. |
-| `js/app.js` | `DiffNoteApp` | File handling, diff render, AI generation, copy, reset. |
+| `js/app.js` | `DiffNoteApp` | File handling, diff render, minimap navigation, AI generation, copy, reset. |
 | `js/sw-register.js` | — | Service worker registration, update prompt, and guarded reload. |
 | `sw.js` | — | Network-first service worker. |
 
@@ -33,8 +33,8 @@ Each module is an IIFE that publishes its global before later modules use it.
 File inputs ──FileReader──▶ DiffNoteDiff.compute() ──▶ rows + stats
                                        │
                  ┌─────────────────────┼─────────────────────┐
-                 ▼                     ▼                       ▼
-        renderStats()           renderDiff()           renderAI() (mock)
+                                       ▼                     ▼                       ▼
+        renderStats()           renderDiff()           renderAI() (local baseline)
                                                               │
                                        auto-generate after each diff
                                           (or Regenerate click)
@@ -45,9 +45,25 @@ File inputs ──FileReader──▶ DiffNoteDiff.compute() ──▶ rows + st
 ```
 
 - The **diff engine** is pure and unit-tested; it never touches the DOM.
-- **Mock notes** render instantly as a baseline; the real LLM call then fires
-  automatically (and can be re-run via the **Regenerate** button).
+- Local baseline notes render instantly as an offline-safe fallback; the real
+  LLM call then fires automatically and can be re-run via **Regenerate
+  analysis**. The fallback is not exposed as a production status label.
 - **Keys are decrypted only at call time** inside `DiffNoteSettings.resolve()`.
+
+## UI V2 responsibilities
+
+- `#diffViewer` remains the source of truth for rendered rows and the only
+  vertical/horizontal scroll owner. The diff header mirrors filenames and
+  stats from the same `lastResult` state.
+- The segmented line-mode buttons only toggle the existing
+  `.changes-only` presentation class; diff calculation and copy serialization
+  remain unchanged.
+- `#inspector` owns file inputs and four tab panels. `js/app.js` renders one
+  structured notes object into Summary, Risks, Tests, and Commit containers;
+  `js/ui.js` owns selection state and keyboard navigation.
+- Wide screens dock the inspector at a 3:1 diff-to-inspector ratio. Tablet
+  screens use a right drawer, and mobile uses a bottom sheet so the diff stays
+  primary. No analysis state is persisted by these layout changes.
 
 ## i18n model
 
@@ -57,6 +73,19 @@ One language setting drives both UI and generated output:
 - Dynamic strings: `DiffNoteI18n.t('key', vars)`.
 - On change, `DiffNoteI18n.apply(document)` re-translates static nodes and
   `DiffNoteApp.onLanguageChange()` re-renders dynamic ones.
+
+## Diff navigation
+
+- `#diffViewer` owns the actual vertical and horizontal scrolling of rendered
+  diff rows.
+- `#diffMinimap` is a visual position map. A click jumps to the selected
+  region; a primary pointer press followed by vertical movement continuously
+  scrubs the viewer. Pointer capture keeps the drag active when the pointer
+  leaves the narrow minimap, while the code area remains available for normal
+  text selection and horizontal scrolling.
+- `#minimapViewport` is updated from the viewer's scroll event, so the map
+  remains synchronized after manual scrolling, drag navigation, filtering, and
+  resize.
 
 ## PWA / "always latest"
 

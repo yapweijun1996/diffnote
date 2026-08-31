@@ -1,9 +1,9 @@
 /**
- * DiffNote — mock AI change-note generator (Stories 6 & 7).
+ * DiffNote — local baseline change-note generator (Stories 6 & 7).
  *
  * Produces a structured, deterministic "explanation" from local diff stats
- * only. No network, no real model. This is a placeholder that Epic 2 will
- * replace with a real local/remote LLM call.
+ * only. No network, no real model. It keeps the offline-first UI useful while
+ * the real local/remote LLM call is unavailable.
  *
  * Exposes `DiffNoteAI.generate(diffResult, fileName)`.
  */

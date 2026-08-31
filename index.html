@@ -79,59 +79,123 @@
           </div>
         </div>
 
-        <!-- DIFF toolbar: changes-only filter + change navigation. -->
+        <!-- DIFF toolbar: line mode, change navigation and copy actions. -->
         <div class="diff-toolbar" id="diffToolbar">
-          <label class="changes-only-toggle">
-            <input type="checkbox" id="changesOnlyToggle" />
-            <span data-i18n="toolbar.changesOnly">Changes only</span>
-          </label>
+          <div class="segmented-control" id="diffModeControl" role="group" data-i18n-attr="aria-label:toolbar.lineMode" aria-label="Line display mode">
+            <button class="segment-btn is-selected" id="allLinesBtn" type="button" aria-pressed="true" data-i18n="toolbar.allLines">All lines</button>
+            <button class="segment-btn" id="changesOnlyBtn" type="button" aria-pressed="false" data-i18n="toolbar.changesOnly">Changes only</button>
+          </div>
           <div class="diff-tools">
             <button class="btn-secondary diff-refresh-btn" id="refreshBtn" type="button" data-i18n="toolbar.refresh">Refresh</button>
             <button class="btn-secondary diff-copy-btn" id="copyDiffBtn" type="button" data-i18n="toolbar.copyDiff">Copy diff</button>
             <div class="diff-nav">
-              <button class="icon-btn" id="prevDiffBtn" data-icon="arrow-up" data-i18n-attr="aria-label:toolbar.prevDiff;title:toolbar.prevDiff" aria-label="Previous change" title="Previous change"></button>
-              <button class="icon-btn" id="nextDiffBtn" data-icon="arrow-down" data-i18n-attr="aria-label:toolbar.nextDiff;title:toolbar.nextDiff" aria-label="Next change" title="Next change"></button>
+              <button class="btn-secondary diff-nav-btn" id="prevDiffBtn" type="button" data-i18n-attr="aria-label:toolbar.prevDiff;title:toolbar.prevDiff" aria-label="Previous change" title="Previous change"><span data-icon="arrow-up"></span><span data-i18n="toolbar.previous">Previous</span></button>
+              <span class="diff-position" id="diffPosition" aria-live="polite">—</span>
+              <button class="btn-secondary diff-nav-btn" id="nextDiffBtn" type="button" data-i18n-attr="aria-label:toolbar.nextDiff;title:toolbar.nextDiff" aria-label="Next change" title="Next change"><span data-icon="arrow-down"></span><span data-i18n="toolbar.next">Next</span></button>
             </div>
+          </div>
+        </div>
+
+        <!-- Compact comparison context stays adjacent to the diff. -->
+        <div class="diff-header" id="diffHeader">
+          <div class="diff-file-flow" data-i18n-attr="aria-label:toolbar.fileComparison" aria-label="File comparison">
+            <div class="diff-file-name">
+              <span class="diff-file-kicker" data-i18n="sidebar.before">Before</span>
+              <code id="headerBeforeName">—</code>
+            </div>
+            <span class="diff-file-arrow" aria-hidden="true">→</span>
+            <div class="diff-file-name">
+              <span class="diff-file-kicker" data-i18n="sidebar.after">After</span>
+              <code id="headerAfterName">—</code>
+            </div>
+          </div>
+          <div class="diff-header-stats" id="diffHeaderStats" hidden aria-live="polite">
+            <span class="header-stat header-stat-added"><strong id="headerStatAdded">0</strong><span data-i18n="stat.added">added</span></span>
+            <span class="header-stat header-stat-deleted"><strong id="headerStatDeleted">0</strong><span data-i18n="stat.deleted">deleted</span></span>
+            <span class="header-stat header-stat-blocks"><strong id="headerStatBlocks">0</strong><span data-i18n="stat.blocks">blocks</span></span>
           </div>
         </div>
 
         <!-- DIFF: change-location map + scrollable diff. -->
         <div class="diff-main" id="diffMain">
-          <div class="diff-minimap" id="diffMinimap" title="Change map — click to jump">
+          <div class="diff-minimap" id="diffMinimap"
+            data-i18n-attr="aria-label:toolbar.changeMap;title:toolbar.changeMap"
+            aria-label="Change map — click or drag to scroll"
+            title="Change map — click or drag to scroll">
             <div class="minimap-viewport" id="minimapViewport"></div>
           </div>
           <div class="diff-viewer" id="diffViewer"></div>
         </div>
       </main>
 
-      <!-- INSPECTOR: files + stats + change notes (one place) -->
-      <aside class="inspector" id="inspector" aria-label="Files, stats and change notes">
-        <section class="inspector-section">
+      <!-- INSPECTOR: compact file inputs + tabbed analysis. -->
+      <aside class="inspector" id="inspector" aria-labelledby="inspectorHeading">
+        <section class="inspector-section inspector-files">
           <h2 class="sidebar-heading" data-i18n="sidebar.files">Files</h2>
           <!-- Compact home for the dropzones once a diff is shown.
                At startup the dropzones live in #startupZones (centered). -->
           <div class="dropzones" id="dropzones"></div>
         </section>
 
-        <section class="inspector-section">
-          <h2 class="sidebar-heading" data-i18n="sidebar.stats">Stats</h2>
-          <div class="stats-bar" id="statsBar" hidden aria-live="polite">
-            <div class="stat stat-added"><strong id="statAdded">0</strong><span data-i18n="stat.added">added</span></div>
-            <div class="stat stat-deleted"><strong id="statDeleted">0</strong><span data-i18n="stat.deleted">deleted</span></div>
-            <div class="stat stat-blocks"><strong id="statBlocks">0</strong><span data-i18n="stat.blocks">blocks</span></div>
+        <section class="inspector-section inspector-analysis" id="notesPanel">
+          <div class="inspector-head">
+            <h2 class="inspector-title" id="inspectorHeading" data-i18n="inspector.title">Change Notes</h2>
+            <button class="generate-btn" id="generateBtn" hidden type="button"><span class="btn-icon" data-icon="sparkle"></span><span class="btn-label"></span></button>
           </div>
-          <p class="stats-empty muted" id="statsEmpty" data-i18n="sidebar.statsEmpty">Compare two files to see stats.</p>
+
+          <div class="inspector-tabs" role="tablist" data-i18n-attr="aria-label:inspector.tabsLabel">
+            <button class="inspector-tab is-selected" id="summaryTab" type="button" role="tab" aria-selected="true" aria-controls="summaryPanel" data-inspector-tab="summary" data-i18n="inspector.summary">Summary</button>
+            <button class="inspector-tab" id="risksTab" type="button" role="tab" aria-selected="false" aria-controls="risksPanel" tabindex="-1" data-inspector-tab="risks" data-i18n="inspector.risks">Risks</button>
+            <button class="inspector-tab" id="testsTab" type="button" role="tab" aria-selected="false" aria-controls="testsPanel" tabindex="-1" data-inspector-tab="tests" data-i18n="inspector.tests">Tests</button>
+            <button class="inspector-tab" id="commitTab" type="button" role="tab" aria-selected="false" aria-controls="commitPanel" tabindex="-1" data-inspector-tab="commit" data-i18n="inspector.commit">Commit</button>
+          </div>
+
+          <div class="analysis-loading" id="analysisLoading" role="status" hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <span data-i18n="notes.generating">Generating change notes with AI…</span>
+          </div>
+
+          <div class="inspector-tab-panels" id="inspectorTabPanels">
+            <section class="inspector-tab-panel" id="summaryPanel" role="tabpanel" aria-labelledby="summaryTab">
+              <div class="inspector-stats">
+                <h3 class="sidebar-heading" data-i18n="sidebar.stats">Stats</h3>
+                <div class="stats-bar" id="statsBar" hidden aria-live="polite">
+                  <div class="stat stat-added"><strong id="statAdded">0</strong><span data-i18n="stat.added">added</span></div>
+                  <div class="stat stat-deleted"><strong id="statDeleted">0</strong><span data-i18n="stat.deleted">deleted</span></div>
+                  <div class="stat stat-blocks"><strong id="statBlocks">0</strong><span data-i18n="stat.blocks">blocks</span></div>
+                </div>
+                <p class="stats-empty muted" id="statsEmpty" data-i18n="sidebar.statsEmpty">Compare two files to see stats.</p>
+              </div>
+              <div class="ai-content" id="aiContent">
+                <p class="muted" data-i18n="inspector.placeholder">Change notes appear here after you compare two files.</p>
+              </div>
+            </section>
+
+            <section class="inspector-tab-panel" id="risksPanel" role="tabpanel" aria-labelledby="risksTab" hidden>
+              <div class="ai-content" id="risksContent">
+                <p class="muted" data-i18n="inspector.risksPlaceholder">Risk items appear here after analysis.</p>
+              </div>
+            </section>
+
+            <section class="inspector-tab-panel" id="testsPanel" role="tabpanel" aria-labelledby="testsTab" hidden>
+              <div class="ai-content" id="testsContent">
+                <p class="muted" data-i18n="inspector.testsPlaceholder">Verification suggestions appear here after analysis.</p>
+              </div>
+            </section>
+
+            <section class="inspector-tab-panel" id="commitPanel" role="tabpanel" aria-labelledby="commitTab" hidden>
+              <div class="ai-content" id="commitContent">
+                <p class="muted" data-i18n="inspector.commitPlaceholder">A concise commit message appears here after analysis.</p>
+              </div>
+            </section>
+          </div>
         </section>
 
-        <div class="inspector-head">
-          <h2 class="inspector-title"><span data-i18n="inspector.title">Change Notes</span> <span class="badge" id="notesBadge">mock</span></h2>
-          <button class="generate-btn" id="generateBtn" hidden><span class="btn-icon" data-icon="sparkle"></span><span class="btn-label"></span></button>
-        </div>
-        <div class="ai-content" id="aiContent">
-          <p class="muted" data-i18n="inspector.placeholder">Change notes appear here after you compare two files.</p>
-        </div>
-
-        <p class="privacy-note muted"><span class="inline-icon" data-icon="lock"></span><span data-i18n="sidebar.privacy">Local-first — files never leave your browser.</span></p>
+        <!-- Keep local-first context visible without competing with analysis. -->
+        <p class="privacy-note muted">
+          <span class="inline-icon" data-icon="lock"></span>
+          <span data-i18n="sidebar.privacy">Local-first — files never leave your browser.</span>
+        </p>
       </aside>
 
       <!-- Scrim for mobile drawers -->
