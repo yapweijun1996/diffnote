@@ -60,6 +60,10 @@
 
     'inspector.title':  { en: 'Change Notes', zh: '变更说明', vi: 'Ghi chú thay đổi', ms: 'Nota Perubahan', ja: '変更ノート' },
     'inspector.tabsLabel': { en: 'Change note sections', zh: '变更说明分区', vi: 'Các phần ghi chú thay đổi', ms: 'Bahagian nota perubahan', ja: '変更ノートのセクション' },
+    'inspector.resize': { en: 'Resize inspector — drag or use Left/Right arrows', zh: '调整 Inspector — 拖动或使用左右方向键', vi: 'Đổi kích thước bảng — kéo hoặc dùng phím mũi tên Trái/Phải', ms: 'Ubah saiz pemeriksa — seret atau guna anak panah Kiri/Kanan', ja: 'インスペクターのサイズ変更 — ドラッグまたは左右矢印キーを使用' },
+    'inspector.resizeValue': { en: 'Inspector width: {width} pixels', zh: 'Inspector 宽度：{width} 像素', vi: 'Chiều rộng bảng: {width} pixel', ms: 'Lebar pemeriksa: {width} piksel', ja: 'インスペクター幅：{width}ピクセル' },
+    'inspector.collapse': { en: 'Collapse inspector', zh: '折叠 Inspector', vi: 'Thu gọn bảng', ms: 'Runtuhkan pemeriksa', ja: 'インスペクターを折りたたむ' },
+    'inspector.expand': { en: 'Expand inspector', zh: '展开 Inspector', vi: 'Mở rộng bảng', ms: 'Kembangkan pemeriksa', ja: 'インスペクターを展開' },
     'inspector.summary': { en: 'Summary', zh: '摘要', vi: 'Tóm tắt', ms: 'Ringkasan', ja: '概要' },
     'inspector.risks': { en: 'Risks', zh: '风险', vi: 'Rủi ro', ms: 'Risiko', ja: 'リスク' },
     'inspector.tests': { en: 'Tests', zh: '测试', vi: 'Kiểm thử', ms: 'Ujian', ja: 'テスト' },

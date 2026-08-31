@@ -128,6 +128,15 @@
         </div>
       </main>
 
+      <!-- Desktop-only presentation control: the UI shell owns its state. -->
+      <div class="inspector-resize-handle" id="inspectorResizeHandle"
+        role="separator" aria-orientation="vertical" tabindex="0"
+        data-i18n-attr="aria-label:inspector.resize;title:inspector.resize"
+        aria-label="Resize inspector — drag or use Left/Right arrows"
+        title="Resize inspector — drag or use Left/Right arrows"
+        aria-valuemin="300" aria-valuemax="600" aria-valuenow="360"
+        aria-valuetext="Inspector width: 360 pixels"></div>
+
       <!-- INSPECTOR: compact file inputs + tabbed analysis. -->
       <aside class="inspector" id="inspector" aria-labelledby="inspectorHeading">
         <section class="inspector-section inspector-files">
@@ -139,7 +148,14 @@
 
         <section class="inspector-section inspector-analysis" id="notesPanel">
           <div class="inspector-head">
-            <h2 class="inspector-title" id="inspectorHeading" data-i18n="inspector.title">Change Notes</h2>
+            <div class="inspector-title-row">
+              <h2 class="inspector-title" id="inspectorHeading" data-i18n="inspector.title">Change Notes</h2>
+              <button class="icon-btn inspector-collapse-btn" id="inspectorCollapseBtn"
+                data-icon="chevron-left" type="button"
+                data-i18n-attr="aria-label:inspector.collapse;title:inspector.collapse"
+                aria-label="Collapse inspector" title="Collapse inspector"
+                aria-expanded="true" aria-controls="inspector"></button>
+            </div>
             <button class="generate-btn" id="generateBtn" hidden type="button"><span class="btn-icon" data-icon="sparkle"></span><span class="btn-label"></span></button>
           </div>
 

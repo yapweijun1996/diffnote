@@ -888,3 +888,65 @@ body {
   .app-body.notes-open .inspector { transform: translateY(0); }
   .inspector-tab-panels { padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
+
+/* ---- UI/UX V2.1: resizable desktop inspector --------------------------- */
+@media (min-width: 901px) {
+  .app-body {
+    grid-template-columns: minmax(420px, 3fr) 10px minmax(300px, 1fr);
+    overflow: hidden;
+  }
+
+  .app-body.notes-hidden { grid-template-columns: minmax(0, 1fr) 0 0; }
+  .app-body.notes-hidden .inspector,
+  .app-body.notes-hidden .inspector-resize-handle { display: none; }
+
+  .inspector-resize-handle {
+    position: relative;
+    align-self: stretch;
+    min-width: 10px;
+    cursor: col-resize;
+    touch-action: none;
+    user-select: none;
+    z-index: 2;
+  }
+  .inspector-resize-handle::before {
+    content: '';
+    position: absolute;
+    inset: 0 4px;
+    background: var(--border);
+    transition: background var(--dur-fast) var(--ease);
+  }
+  .inspector-resize-handle:hover::before,
+  .inspector-resize-handle.is-dragging::before { background: var(--accent); }
+  .inspector-resize-handle:focus-visible::before {
+    background: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .inspector-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+  .inspector-collapse-btn {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.app[data-mode="startup"] .inspector-resize-handle { display: none; }
+
+@media (max-width: 900px) {
+  .inspector-resize-handle { display: none; }
+  .inspector-collapse-btn { display: none; }
+}
+
+body.is-resizing-inspector,
+body.is-resizing-inspector * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}

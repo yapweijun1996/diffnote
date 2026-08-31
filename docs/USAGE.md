@@ -25,8 +25,10 @@ python3 -m http.server 8000
 
 The diff is the primary workspace. On a wide screen the inspector occupies a
 compact right column; use its **Summary**, **Risks**, **Tests**, and **Commit**
-tabs to focus the information you need. On tablet and mobile, the inspector
-opens from the topbar as a drawer or bottom sheet.
+tabs to focus the information you need. On desktop, drag the divider between
+the diff and Inspector to resize it, or use the edge control to collapse and
+restore it. The width is remembered locally. On tablet and mobile, resizing is
+disabled and the inspector opens from the topbar as a drawer or bottom sheet.
 
 Use **All lines** / **Changes only** to control the visible rows. The diff
 header shows the Before → After filenames and the current statistics. Use
@@ -82,6 +84,9 @@ keep any in-progress file selection or unsaved UI state in mind before choosing
 - Dropzones are focusable; <kbd>Enter</kbd> / <kbd>Space</kbd> opens the file picker.
 - The inspector tabs support <kbd>Left</kbd> / <kbd>Right</kbd>, <kbd>Home</kbd>,
   and <kbd>End</kbd> keyboard navigation.
+- On desktop, focus the Inspector divider and use <kbd>Left</kbd> /
+  <kbd>Right</kbd> to resize it; hold <kbd>Shift</kbd> for larger steps.
+  Double-click the divider to restore the default 75/25 layout.
 - The minimap supports click and press-hold drag navigation; its viewport stays
   synchronized with the diff scroll position.
 - All interactive elements show a visible focus ring.

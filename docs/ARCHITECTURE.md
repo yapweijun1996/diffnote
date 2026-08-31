@@ -15,7 +15,7 @@ via `<script>` tags; modules communicate through small globals on `window`.
 | `js/settings.js` | `DiffNoteSettings` | Provider registry, XOR key store, generation settings. |
 | `js/i18n.js` | `DiffNoteI18n` | Translation dictionary + `t()` / `apply()`. |
 | `js/llm.js` | `DiffNoteLLM` | Provider adapters; structured note generation. |
-| `js/ui.js` | `DiffNoteUI`, `DiffNoteToast` | Theme, inspector tabs/drawers, toast, topbar language switch, update banner. |
+| `js/ui.js` | `DiffNoteUI`, `DiffNoteToast` | Theme, inspector tabs/drawers/resizing, UI-only layout state, toast, topbar language switch, update banner. |
 | `js/settings-ui.js` | — | Settings modal controller. |
 | `js/app.js` | `DiffNoteApp` | File handling, diff render, minimap navigation, AI generation, copy, reset. |
 | `js/sw-register.js` | — | Service worker registration, update prompt, and guarded reload. |
@@ -61,9 +61,13 @@ File inputs ──FileReader──▶ DiffNoteDiff.compute() ──▶ rows + st
 - `#inspector` owns file inputs and four tab panels. `js/app.js` renders one
   structured notes object into Summary, Risks, Tests, and Commit containers;
   `js/ui.js` owns selection state and keyboard navigation.
-- Wide screens dock the inspector at a 3:1 diff-to-inspector ratio. Tablet
-  screens use a right drawer, and mobile uses a bottom sheet so the diff stays
-  primary. No analysis state is persisted by these layout changes.
+- Wide screens dock the inspector at a 3:1 diff-to-inspector ratio. The
+  `#inspectorResizeHandle` changes only the grid track and stores the final
+  pixel width under `diffnote-inspector-width`. Width is clamped to 300px–50vw
+  and leaves at least 420px for the diff. Tablet screens use a right drawer,
+  and mobile uses a bottom sheet so the diff stays primary. Collapsing hides
+  the docked track and expanding restores the previous width; no analysis or
+  file state is persisted by these layout changes.
 
 ## i18n model
 
@@ -86,6 +90,16 @@ One language setting drives both UI and generated output:
 - `#minimapViewport` is updated from the viewer's scroll event, so the map
   remains synchronized after manual scrolling, drag navigation, filtering, and
   resize.
+
+## Inspector resizing
+
+- `js/ui.js` owns the separator pointer lifecycle, pointer capture cleanup,
+  keyboard increments, double-click reset, breakpoint reconciliation, and the
+  UI-only localStorage value. `js/app.js` does not read or write this state.
+- The desktop grid reserves a 10px interaction lane with a 2px visual divider.
+  Pointer movement changes Inspector width continuously; `pointercancel`,
+  `lostpointercapture`, window pointer-up, and viewport resize all terminate or
+  reconcile the interaction safely.
 
 ## PWA / "always latest"
 

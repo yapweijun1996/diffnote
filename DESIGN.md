@@ -51,8 +51,10 @@ files load):
   stats next to the diff. The viewer owns vertical and horizontal scrolling.
 - **Inspector** (`--inspector-w: 360px`): compact file inputs plus four focused
   analysis tabs: Summary, Risks, Tests, and Commit. It is docked at a 3:1
-  diff-to-inspector ratio on wide screens, a right drawer on tablet, and a
-  bottom sheet on mobile.
+  diff-to-inspector ratio on wide screens and can be resized from 300px to
+  50vw while preserving at least 420px for the diff. Tablet uses a right
+  drawer and mobile uses a bottom sheet; desktop width is presentation state
+  persisted locally, not diff data.
 
 ## 4. Color System
 
@@ -157,7 +159,7 @@ The diff-first layout uses wide, tablet, and mobile structural breakpoints.
 
 | Name | Width | Behavior |
 |---|---|---|
-| wide (default) | ≥ 901px | content + inspector docked at a 3:1 ratio |
+| wide (default) | ≥ 901px | content + resizable inspector docked at a 3:1 ratio |
 | tablet | 769–900px | content full width; inspector is a right-side drawer |
 | mobile | ≤ 768px | single-column diff; inspector is a drawer |
 | compact mobile | ≤ 520px | inspector becomes a bottom sheet; controls wrap |
@@ -192,5 +194,9 @@ when a release is ready, the user controls when the waiting release takes over.
 - The minimap supports click and primary-pointer drag with a visible
   grab/grabbing affordance; the code area retains native text selection and
   horizontal scrolling.
+- The desktop Inspector divider is a keyboard-focusable vertical separator.
+  Dragging or `Left` / `Right` arrows change its width; `Shift` increases the
+  step, and double-click restores the default layout. The inspector can be
+  collapsed and expanded without losing its tab or note content.
 - `prefers-reduced-motion` respected.
 - Keyboard: dropzones focusable + Enter/Space activate; toggles are real buttons.

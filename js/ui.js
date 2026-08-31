@@ -1,5 +1,5 @@
 /**
- * DiffNote — UI shell controller: theme toggle, sidebar/inspector drawers,
+ * DiffNote — UI shell controller: theme toggle, inspector layout/drawers,
  * reset, and the user-controlled service worker update prompt. Diff + AI
  * logic live elsewhere.
  *
@@ -10,8 +10,11 @@
   'use strict';
 
   const root = document.documentElement;
+  const app = document.querySelector('.app');
   const appBody = document.querySelector('.app-body');
   const scrim = document.getElementById('scrim');
+  const resizeHandle = document.getElementById('inspectorResizeHandle');
+  const collapseBtn = document.getElementById('inspectorCollapseBtn');
   const themeBtn = document.getElementById('themeBtn');
   const notesBtn = document.getElementById('notesBtn');
   const resetBtn = document.getElementById('resetBtn');
@@ -23,6 +26,222 @@
   const THEME_ICON = { light: 'moon', dark: 'sun' };
 
   const isWide = () => window.matchMedia('(min-width: 901px)').matches;
+
+  // Inspector sizing is presentation-only state. Keep it in this UI module so
+  // diff/file state never depends on the user's preferred panel width.
+  const INSPECTOR_WIDTH_KEY = 'diffnote-inspector-width';
+  const DEFAULT_INSPECTOR_RATIO = 0.25;
+  const MIN_INSPECTOR_WIDTH = 300;
+  const MAX_INSPECTOR_RATIO = 0.5;
+  const MIN_DIFF_WIDTH = 420;
+  const RESIZE_HANDLE_WIDTH = 10;
+  const KEYBOARD_STEP = 16;
+  const KEYBOARD_LARGE_STEP = 64;
+
+  let inspectorWidth = readStoredInspectorWidth();
+  let expandedInspectorWidth = inspectorWidth;
+  let resizeState = null;
+
+  function readStoredInspectorWidth() {
+    try {
+      const value = Number.parseInt(localStorage.getItem(INSPECTOR_WIDTH_KEY), 10);
+      return Number.isFinite(value) && value > 0 ? value : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function persistInspectorWidth(width) {
+    try { localStorage.setItem(INSPECTOR_WIDTH_KEY, String(Math.round(width))); }
+    catch (e) { /* private mode or storage unavailable */ }
+  }
+
+  function getWidthBounds() {
+    const bodyWidth = appBody ? appBody.clientWidth : window.innerWidth;
+    const maxByDiff = Math.max(0, bodyWidth - RESIZE_HANDLE_WIDTH - MIN_DIFF_WIDTH);
+    const maxByViewport = Math.floor(window.innerWidth * MAX_INSPECTOR_RATIO);
+    const max = Math.max(MIN_INSPECTOR_WIDTH, Math.min(maxByDiff, maxByViewport));
+    const min = Math.min(MIN_INSPECTOR_WIDTH, max);
+    return { min, max };
+  }
+
+  function clampInspectorWidth(width) {
+    const bounds = getWidthBounds();
+    const value = Number.isFinite(Number(width)) ? Number(width) : bounds.min;
+    return Math.round(Math.min(bounds.max, Math.max(bounds.min, value)));
+  }
+
+  function getDefaultInspectorWidth() {
+    const bodyWidth = appBody ? appBody.clientWidth : window.innerWidth;
+    return clampInspectorWidth(bodyWidth * DEFAULT_INSPECTOR_RATIO);
+  }
+
+  function updateResizeHandleA11y(width) {
+    if (!resizeHandle) return;
+    const bounds = getWidthBounds();
+    const current = clampInspectorWidth(width);
+    resizeHandle.setAttribute('aria-valuemin', String(Math.round(bounds.min)));
+    resizeHandle.setAttribute('aria-valuemax', String(Math.round(bounds.max)));
+    resizeHandle.setAttribute('aria-valuenow', String(current));
+    resizeHandle.setAttribute('aria-valuetext', window.DiffNoteI18n.t('inspector.resizeValue', { width: current }));
+  }
+
+  function applyInspectorWidth(width, persist = false) {
+    if (!appBody || !isWide()) return;
+    const current = clampInspectorWidth(width);
+    inspectorWidth = current;
+    appBody.style.gridTemplateColumns = `minmax(${MIN_DIFF_WIDTH}px, 1fr) ${RESIZE_HANDLE_WIDTH}px ${current}px`;
+    updateResizeHandleA11y(current);
+    if (persist) persistInspectorWidth(current);
+  }
+
+  function syncWideInspectorLayout() {
+    if (!appBody || !isWide() || app?.dataset.mode !== 'diff') return;
+    const collapsed = appBody.classList.contains('notes-hidden');
+    const hadStoredWidth = inspectorWidth != null;
+    const candidate = expandedInspectorWidth || inspectorWidth || getDefaultInspectorWidth();
+    const current = clampInspectorWidth(candidate);
+    expandedInspectorWidth = current;
+    if (collapsed) {
+      appBody.style.gridTemplateColumns = 'minmax(0, 1fr) 0 0';
+      updateResizeHandleA11y(current);
+    } else applyInspectorWidth(current);
+    if (hadStoredWidth && current !== candidate) {
+      persistInspectorWidth(current);
+    }
+  }
+
+  function setCollapseButtonState(collapsed) {
+    if (collapseBtn) {
+      window.DiffNoteIcons.set(collapseBtn, collapsed ? 'chevron-right' : 'chevron-left');
+      const key = collapsed ? 'inspector.expand' : 'inspector.collapse';
+      const label = window.DiffNoteI18n.t(key);
+      collapseBtn.setAttribute('aria-expanded', String(!collapsed));
+      collapseBtn.setAttribute('aria-label', label);
+      collapseBtn.setAttribute('title', label);
+    }
+    if (notesBtn) notesBtn.setAttribute('aria-pressed', String(!collapsed));
+  }
+
+  function setInspectorCollapsed(collapsed) {
+    if (!appBody || !isWide()) return;
+    if (collapsed) {
+      expandedInspectorWidth = clampInspectorWidth(expandedInspectorWidth || inspectorWidth || getDefaultInspectorWidth());
+      appBody.classList.add('notes-hidden');
+      appBody.style.gridTemplateColumns = 'minmax(0, 1fr) 0 0';
+    } else {
+      appBody.classList.remove('notes-hidden');
+      applyInspectorWidth(expandedInspectorWidth || inspectorWidth || getDefaultInspectorWidth());
+    }
+    setCollapseButtonState(collapsed);
+  }
+
+  function resetInspectorWidth() {
+    if (!isWide() || app?.dataset.mode !== 'diff') return;
+    setInspectorCollapsed(false);
+    const current = getDefaultInspectorWidth();
+    expandedInspectorWidth = current;
+    applyInspectorWidth(current, true);
+  }
+
+  function finishInspectorResize(event, persist = true) {
+    if (!resizeState) return;
+    if (event && event.pointerId !== resizeState.pointerId) return;
+    const pointerId = resizeState.pointerId;
+    if (persist && inspectorWidth != null) {
+      expandedInspectorWidth = inspectorWidth;
+      persistInspectorWidth(inspectorWidth);
+    }
+    try {
+      if (resizeHandle && resizeHandle.hasPointerCapture(pointerId)) resizeHandle.releasePointerCapture(pointerId);
+    } catch (e) { /* pointer capture may already be gone */ }
+    document.body.classList.remove('is-resizing-inspector');
+    if (resizeHandle) resizeHandle.classList.remove('is-dragging');
+    resizeState = null;
+  }
+
+  function handleInspectorPointerDown(event) {
+    if (!resizeHandle || !isWide() || app?.dataset.mode !== 'diff' || !event.isPrimary) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (event.pointerType !== 'mouse' && event.button !== 0) return;
+    const current = clampInspectorWidth(expandedInspectorWidth || inspectorWidth || getDefaultInspectorWidth());
+    resizeState = { pointerId: event.pointerId, startX: event.clientX, startWidth: current };
+    event.preventDefault();
+    resizeHandle.classList.add('is-dragging');
+    document.body.classList.add('is-resizing-inspector');
+    try { resizeHandle.setPointerCapture(event.pointerId); }
+    catch (e) { /* pointer capture is optional; window cleanup remains active */ }
+  }
+
+  function handleInspectorPointerMove(event) {
+    if (!resizeState || event.pointerId !== resizeState.pointerId) return;
+    event.preventDefault();
+    const delta = event.clientX - resizeState.startX;
+    applyInspectorWidth(resizeState.startWidth - delta);
+  }
+
+  function handleInspectorKeydown(event) {
+    if (!isWide() || app?.dataset.mode !== 'diff') return;
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const step = event.shiftKey ? KEYBOARD_LARGE_STEP : KEYBOARD_STEP;
+    const current = clampInspectorWidth(expandedInspectorWidth || inspectorWidth || getDefaultInspectorWidth());
+    const next = event.key === 'ArrowLeft' ? current + step : current - step;
+    expandedInspectorWidth = clampInspectorWidth(next);
+    applyInspectorWidth(expandedInspectorWidth, true);
+  }
+
+  function clearDesktopInspectorLayout() {
+    if (!appBody) return;
+    finishInspectorResize(null, false);
+    appBody.style.removeProperty('grid-template-columns');
+    appBody.classList.remove('notes-hidden');
+    setCollapseButtonState(false);
+  }
+
+  function handleBreakpointChange() {
+    if (isWide()) {
+      closeDrawers();
+      syncWideInspectorLayout();
+    } else {
+      clearDesktopInspectorLayout();
+      closeDrawers();
+    }
+  }
+
+  if (resizeHandle) {
+    resizeHandle.addEventListener('pointerdown', handleInspectorPointerDown);
+    resizeHandle.addEventListener('pointermove', handleInspectorPointerMove);
+    resizeHandle.addEventListener('pointerup', (event) => finishInspectorResize(event));
+    resizeHandle.addEventListener('pointercancel', (event) => finishInspectorResize(event, false));
+    resizeHandle.addEventListener('lostpointercapture', (event) => finishInspectorResize(event));
+    resizeHandle.addEventListener('dblclick', (event) => {
+      if (!isWide()) return;
+      event.preventDefault();
+      resetInspectorWidth();
+    });
+    resizeHandle.addEventListener('keydown', handleInspectorKeydown);
+    updateResizeHandleA11y(inspectorWidth || getDefaultInspectorWidth());
+  }
+  if (collapseBtn) collapseBtn.addEventListener('click', () => {
+    setInspectorCollapsed(!appBody.classList.contains('notes-hidden'));
+  });
+  window.addEventListener('pointerup', (event) => finishInspectorResize(event));
+  window.addEventListener('pointercancel', (event) => finishInspectorResize(event, false));
+  window.addEventListener('resize', () => {
+    if (isWide()) syncWideInspectorLayout();
+    else clearDesktopInspectorLayout();
+  });
+  if (app) {
+    new MutationObserver(() => {
+      if (app.dataset.mode === 'diff') syncWideInspectorLayout();
+      else clearDesktopInspectorLayout();
+    }).observe(app, { attributes: true, attributeFilter: ['data-mode'] });
+  }
+  new MutationObserver(() => {
+    if (inspectorWidth != null) updateResizeHandleA11y(inspectorWidth);
+    setCollapseButtonState(appBody?.classList.contains('notes-hidden') || false);
+  }).observe(root, { attributes: true, attributeFilter: ['lang'] });
 
   // ---- Inspector tabs --------------------------------------------------
   const inspectorTabs = Array.from(document.querySelectorAll('[data-inspector-tab]'));
@@ -206,8 +425,7 @@
   // Notes (inspector): docked collapse-toggle on wide, overlay drawer on narrow.
   notesBtn.addEventListener('click', () => {
     if (isWide()) {
-      const hidden = appBody.classList.toggle('notes-hidden');
-      notesBtn.setAttribute('aria-pressed', String(!hidden));
+      setInspectorCollapsed(!appBody.classList.contains('notes-hidden'));
     } else {
       const open = appBody.classList.toggle('notes-open');
       notesBtn.setAttribute('aria-pressed', String(open));
@@ -222,6 +440,6 @@
     }
   });
 
-  // Clean up drawer state when crossing back to wide layout.
-  window.matchMedia('(min-width: 901px)').addEventListener('change', closeDrawers);
+  // Reconcile docked and drawer presentation when crossing the breakpoint.
+  window.matchMedia('(min-width: 901px)').addEventListener('change', handleBreakpointChange);
 })();
