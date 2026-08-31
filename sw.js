@@ -10,7 +10,7 @@
  *
  * Bump CACHE_VERSION when the offline fallback set should be refreshed.
  */
-const CACHE_VERSION = 'diffnote-v8';
+const CACHE_VERSION = 'diffnote-v9';
 const APP_SHELL = [
   './',
   './index.html',
@@ -27,6 +27,7 @@ const APP_SHELL = [
   './js/app.js',
   './js/sw-register.js',
   './manifest.webmanifest',
+  './icons/logo.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
 ];

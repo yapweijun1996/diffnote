@@ -139,10 +139,10 @@ body {
 .icon-btn svg { width: 18px; height: 18px; display: block; }
 .menu-btn { display: none; }
 
-/* SVG icon sizing */
+/* Brand and inline icon sizing */
 .brand-mark { display: inline-flex; }
-.brand-mark svg { width: 22px; height: 22px; }
-.empty-icon svg { width: 40px; height: 40px; }
+.brand-mark img { width: 28px; height: 28px; display: block; object-fit: contain; }
+.empty-icon img { width: 40px; height: 40px; display: block; object-fit: contain; }
 .inline-icon { display: inline-flex; vertical-align: middle; flex: 0 0 auto; }
 .inline-icon svg { width: 15px; height: 15px; }
 .btn-icon { display: inline-flex; }
