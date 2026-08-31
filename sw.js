@@ -5,8 +5,8 @@
  * offline. This guarantees the freshest source on each online load (the real
  * fix for "force auto reload latest") while still working offline once cached.
  *
- * Auto-update: a new SW activates immediately (skipWaiting + claim); the page
- * (sw-register.js) listens for controllerchange and reloads once.
+ * Update lifecycle: a new SW waits until the page asks it to activate;
+ * sw-register.js owns the user prompt and guarded reload.
  *
  * Bump CACHE_VERSION when the offline fallback set should be refreshed.
  */
@@ -34,8 +34,12 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches.open(CACHE_VERSION).then((cache) => cache.addAll(APP_SHELL))
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {

@@ -185,6 +185,45 @@ body {
 .toast-error .toast-icon { color: var(--deleted-fg); }
 .toast-icon svg { width: 16px; height: 16px; }
 
+/* User-controlled PWA update prompt */
+.update-banner {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: min(560px, calc(100% - (var(--space-4) * 2)));
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  transform: translate(-50%, 12px);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease), transform var(--dur-base) var(--ease);
+}
+.update-banner:not([hidden]) { transform: translate(-50%, 0); opacity: 1; }
+.update-banner-copy { display: flex; flex-direction: column; min-width: 0; }
+.update-banner-title { font-size: var(--text-sm); }
+.update-banner-message { color: var(--text-muted); font-size: var(--text-sm); }
+.update-banner-actions { display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto; }
+.update-banner button { min-height: 44px; }
+.update-banner button:disabled { opacity: .6; cursor: default; }
+
+@media (max-width: 520px) {
+  .update-banner {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .update-banner-actions { justify-content: flex-end; }
+}
+
 .app-body {
   flex: 1 1 auto;
   display: grid;

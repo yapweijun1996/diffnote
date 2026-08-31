@@ -206,6 +206,18 @@
   <!-- Toast notifications (top-right) -->
   <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
 
+  <!-- User-controlled PWA update prompt -->
+  <div class="update-banner" id="updateBanner" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <div class="update-banner-copy">
+      <strong class="update-banner-title" data-i18n="pwa.updateAvailable">New version available</strong>
+      <span class="update-banner-message" id="updateBannerMessage" data-i18n="pwa.updatePrompt">Update now to load the latest version.</span>
+    </div>
+    <div class="update-banner-actions">
+      <button class="btn-secondary" id="updateLaterBtn" type="button" data-i18n="pwa.updateLater">Later</button>
+      <button class="btn-primary" id="updateNowBtn" type="button" data-i18n="pwa.updateNow">Update Now</button>
+    </div>
+  </div>
+
   <script src="js/xor-number-cipher.js"></script>
   <script src="js/icons.js"></script>
   <script src="js/diff.js"></script>

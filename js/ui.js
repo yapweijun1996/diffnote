@@ -1,6 +1,7 @@
 /**
  * DiffNote — UI shell controller: theme toggle, sidebar/inspector drawers,
- * and reset. Layout/theme only; diff + AI logic live elsewhere.
+ * reset, and the user-controlled service worker update prompt. Diff + AI
+ * logic live elsewhere.
  *
  * Theme: the INITIAL theme is set by a blocking inline script in <head> to
  * avoid flash. This file only handles the toggle + persistence afterward.
@@ -60,6 +61,67 @@
   }
   window.DiffNoteToast = { show: showToast };
 
+  // ---- Service worker update prompt -----------------------------------
+  const updateBanner = document.getElementById('updateBanner');
+  const updateBannerMessage = document.getElementById('updateBannerMessage');
+  const updateNowBtn = document.getElementById('updateNowBtn');
+  const updateLaterBtn = document.getElementById('updateLaterBtn');
+  let updateHandlers = {};
+
+  function applyUpdateText() {
+    if (updateBanner && window.DiffNoteI18n) window.DiffNoteI18n.apply(updateBanner);
+  }
+  function setUpdateMessage(key) {
+    if (!updateBannerMessage) return;
+    updateBannerMessage.setAttribute('data-i18n', key);
+    applyUpdateText();
+  }
+  function setUpdateActions(nowKey, laterKey) {
+    if (updateNowBtn) updateNowBtn.setAttribute('data-i18n', nowKey);
+    if (updateLaterBtn) updateLaterBtn.setAttribute('data-i18n', laterKey);
+    applyUpdateText();
+  }
+  function showUpdateAvailable(handlers) {
+    updateHandlers = handlers || {};
+    setUpdateMessage('pwa.updatePrompt');
+    setUpdateActions('pwa.updateNow', 'pwa.updateLater');
+    if (updateNowBtn) updateNowBtn.disabled = false;
+    if (updateLaterBtn) { updateLaterBtn.hidden = false; updateLaterBtn.disabled = false; }
+    if (updateBanner) updateBanner.hidden = false;
+  }
+  function showUpdateProgress() {
+    setUpdateMessage('pwa.updating');
+    setUpdateActions('pwa.updating', 'pwa.updateLater');
+    if (updateNowBtn) updateNowBtn.disabled = true;
+    if (updateLaterBtn) { updateLaterBtn.hidden = true; updateLaterBtn.disabled = true; }
+    if (updateBanner) updateBanner.hidden = false;
+  }
+  function showUpdateError(handlers) {
+    updateHandlers = handlers || {};
+    setUpdateMessage('pwa.updateFailed');
+    setUpdateActions('pwa.retryUpdate', 'pwa.dismissUpdate');
+    if (updateNowBtn) updateNowBtn.disabled = false;
+    if (updateLaterBtn) { updateLaterBtn.hidden = false; updateLaterBtn.disabled = false; }
+    if (updateBanner) updateBanner.hidden = false;
+  }
+  function hideUpdatePrompt() {
+    if (updateBanner) updateBanner.hidden = true;
+    updateHandlers = {};
+  }
+  if (updateNowBtn) {
+    updateNowBtn.addEventListener('click', () => {
+      if (updateHandlers.onUpdate) updateHandlers.onUpdate();
+      else if (updateHandlers.onRetry) updateHandlers.onRetry();
+    });
+  }
+  if (updateLaterBtn) {
+    updateLaterBtn.addEventListener('click', () => {
+      if (updateHandlers.onLater) updateHandlers.onLater();
+      else if (updateHandlers.onDismiss) updateHandlers.onDismiss();
+      else hideUpdatePrompt();
+    });
+  }
+
   // ---- Topbar language quick-switch -----------------------------------
   function syncLangSelect() {
     if (topLangSelect) topLangSelect.value = window.DiffNoteSettings.getLanguage();
@@ -89,7 +151,13 @@
     });
   }
   // Expose so other modules can re-sync the topbar selector after a change.
-  window.DiffNoteUI = { syncLangSelect };
+  window.DiffNoteUI = {
+    syncLangSelect,
+    showUpdateAvailable,
+    showUpdateProgress,
+    showUpdateError,
+    hideUpdatePrompt,
+  };
 
   // ---- Inspector drawer / scrim ---------------------------------------
   function updateScrim() {

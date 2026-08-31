@@ -49,7 +49,18 @@ is remembered.
 
 Use your browser's install prompt to install DiffNote for offline use. The
 service worker is network-first, so you always get the latest code online while
-remaining usable offline.
+remaining usable offline. When a new release is ready, DiffNote shows a
+persistent update banner:
+
+- Select **Update Now** to activate the waiting release and reload once.
+- Select **Later** to keep working; the prompt returns on a later focus or
+  visibility check.
+- During activation, the banner shows **Updating…**. If activation fails,
+  choose **Retry** or **Dismiss**.
+
+Files and settings remain local to the browser. Updating reloads the page, so
+keep any in-progress file selection or unsaved UI state in mind before choosing
+**Update Now**.
 
 ## Keyboard & accessibility
 

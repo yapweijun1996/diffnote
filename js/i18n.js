@@ -21,6 +21,15 @@
     'topbar.menu':      { en: 'Toggle sidebar', zh: '切换侧栏', vi: 'Bật/tắt thanh bên', ms: 'Togol bar sisi', ja: 'サイドバー切替' },
     'topbar.language':  { en: 'Language', zh: '语言', vi: 'Ngôn ngữ', ms: 'Bahasa', ja: '言語' },
 
+    'pwa.updateAvailable': { en: 'New version available', zh: '发现新版本', vi: 'Đã có phiên bản mới', ms: 'Versi baharu tersedia', ja: '新しいバージョンがあります' },
+    'pwa.updatePrompt':    { en: 'Update now to load the latest version.', zh: '立即更新以加载最新版本。', vi: 'Cập nhật ngay để tải phiên bản mới nhất.', ms: 'Kemas kini sekarang untuk memuatkan versi terkini.', ja: '今すぐ更新して最新バージョンを読み込みます。' },
+    'pwa.updateNow':       { en: 'Update Now', zh: '立即更新', vi: 'Cập nhật ngay', ms: 'Kemas Kini Sekarang', ja: '今すぐ更新' },
+    'pwa.updateLater':     { en: 'Later', zh: '稍后', vi: 'Để sau', ms: 'Kemudian', ja: '後で' },
+    'pwa.updating':        { en: 'Updating…', zh: '更新中…', vi: 'Đang cập nhật…', ms: 'Sedang mengemas kini…', ja: '更新中…' },
+    'pwa.updateFailed':    { en: 'Update failed. Please try again.', zh: '更新失败，请重试。', vi: 'Cập nhật thất bại. Vui lòng thử lại.', ms: 'Kemas kini gagal. Sila cuba lagi.', ja: '更新に失敗しました。もう一度お試しください。' },
+    'pwa.retryUpdate':     { en: 'Retry', zh: '重试', vi: 'Thử lại', ms: 'Cuba Lagi', ja: '再試行' },
+    'pwa.dismissUpdate':   { en: 'Dismiss', zh: '关闭', vi: 'Bỏ qua', ms: 'Tutup', ja: '閉じる' },
+
     'sidebar.files':    { en: 'Files', zh: '文件', vi: 'Tệp', ms: 'Fail', ja: 'ファイル' },
     'sidebar.before':   { en: 'Before', zh: '修改前', vi: 'Trước', ms: 'Sebelum', ja: '変更前' },
     'sidebar.after':    { en: 'After', zh: '修改后', vi: 'Sau', ms: 'Selepas', ja: '変更後' },

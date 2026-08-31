@@ -160,14 +160,20 @@ default at wide widths.
 
 ## 12. PWA Behavior — "Always Latest"
 
-DiffNote must never serve stale code while staying installable/offline.
+DiffNote should fetch the latest code online while staying installable/offline;
+when a release is ready, the user controls when the waiting release takes over.
 
 - **Service worker = network-first** for all GET requests: try network, fall
   back to cache only when offline. This guarantees the latest source on every
   online load (the real fix for "force auto reload latest").
-- **Auto-update**: new SW calls `skipWaiting()` + `clients.claim()`; the page
-  listens for `controllerchange` and reloads **once** (guarded against loops,
-  and only armed when a controller already existed at startup).
+- **User-controlled update**: a new SW installs and waits. The registration
+  module checks on load, focus, visibility return, and every 15 minutes while
+  visible, then shows a persistent localized **Update Now** banner.
+- **Activation**: clicking **Update Now** sends `SKIP_WAITING`; the worker
+  activates and calls `clients.claim()`. The page listens for
+  `controllerchange` and reloads **once**, guarded against loops and first
+  install spurious reloads. **Later** defers the prompt until a later focus or
+  visibility check; failures expose retry/dismiss actions.
 - Manifest: `display: standalone`, light `theme_color`/`background_color`,
   192 + 512 maskable icons.
 

@@ -22,7 +22,7 @@ by a mock generator and then auto-upgraded by a real LLM.
 - 🌐 Full i18n — UI **and** AI-generated notes in English, Mandarin, Vietnamese, Malay, Japanese (the instant mock baseline is English)
 - 🎨 Apple-inspired admin UI, light default + dark toggle, SVG icons, responsive
 - ⚙️ Configurable commit-message length & prompt
-- 📱 Installable PWA, **network-first** service worker (always latest, offline-capable)
+- 📱 Installable PWA, **network-first** service worker with localized, user-controlled **Update Now** flow
 - 🛠️ Zero build, zero dependencies — plain HTML/CSS/JS
 
 ## Quick start

@@ -15,10 +15,10 @@ via `<script>` tags; modules communicate through small globals on `window`.
 | `js/settings.js` | `DiffNoteSettings` | Provider registry, XOR key store, generation settings. |
 | `js/i18n.js` | `DiffNoteI18n` | Translation dictionary + `t()` / `apply()`. |
 | `js/llm.js` | `DiffNoteLLM` | Provider adapters; structured note generation. |
-| `js/ui.js` | `DiffNoteUI`, `DiffNoteToast` | Theme, drawers, toast, topbar language switch. |
+| `js/ui.js` | `DiffNoteUI`, `DiffNoteToast` | Theme, drawers, toast, topbar language switch, update banner. |
 | `js/settings-ui.js` | — | Settings modal controller. |
 | `js/app.js` | `DiffNoteApp` | File handling, diff render, AI generation, copy, reset. |
-| `js/sw-register.js` | — | Service worker registration + guarded auto-reload. |
+| `js/sw-register.js` | — | Service worker registration, update prompt, and guarded reload. |
 | `sw.js` | — | Network-first service worker. |
 
 ## Load order
@@ -62,9 +62,15 @@ One language setting drives both UI and generated output:
 
 - `sw.js` is **network-first**: it tries the network for every GET and falls
   back to cache only when offline — guaranteeing latest code online.
-- A new service worker activates immediately (`skipWaiting` + `clients.claim`);
-  `sw-register.js` reloads the page once on `controllerchange`, guarded against
-  loops and first-install spurious reloads.
+- GitHub Actions stamps `CACHE_VERSION` with the deployment commit SHA so each
+  release owns a distinct offline cache.
+- A new service worker installs and waits. `sw-register.js` checks for updates
+  on page load, focus, visibility return, and every 15 minutes while visible.
+- When a waiting worker is found, `js/ui.js` shows a persistent, localized
+  banner. **Update Now** sends `SKIP_WAITING`; the worker activates, claims
+  clients, and the page reloads once on `controllerchange`. **Later** hides the
+  prompt until the next focus or visibility check. Failed activation exposes a
+  retry/dismiss state.
 
 ## Design system
 

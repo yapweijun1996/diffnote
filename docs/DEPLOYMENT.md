@@ -29,6 +29,19 @@ Only committed files are checked out, so local artifacts ignored by
 [`.gitignore`](../.gitignore) (e.g. `.verify/` screenshots) never reach the
 deployment.
 
+### Service worker update rollout
+
+The current worker installs a new release and waits for **Update Now** before
+activating it. GitHub Actions stamps the deployed `CACHE_VERSION` with the
+commit SHA, so every release gets a distinct offline cache.
+
+For the first public rollout from the previous immediate-activation behavior,
+use two deployments: first ship the update UI/registration support while
+retaining the old `skipWaiting()` behavior, then ship the waiting/message-driven
+worker behavior. This gives already-open old clients time to receive the new
+registration code. Once this migration is complete, normal releases use the
+single waiting-worker flow.
+
 ## Other static hosts
 
 Upload the repository contents to any static host (Netlify, Vercel, Cloudflare

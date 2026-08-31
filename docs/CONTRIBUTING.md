@@ -19,8 +19,11 @@ python3 -m http.server 8000   # serve over localhost (required for the SW)
 # open http://localhost:8000
 ```
 
-After changing a service-worked file, hard-reload; the network-first SW serves
-latest on a normal online reload.
+After changing a service-worker file, reload the page once to install the local
+worker. For the full update flow, test two distinct worker versions: the first
+worker must control the page, the second must remain waiting until **Update
+Now** is clicked, and activation must reload the page once. The update checker
+runs on load, focus, visibility return, and every 15 minutes while visible.
 
 ## Testing
 
