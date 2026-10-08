@@ -7,7 +7,7 @@ contributing is low-friction.
 
 - **Zero build, zero dependencies.** Plain HTML/CSS/JS served as-is. Do not add
   a bundler, framework, or `npm` runtime dependency.
-- **Local-first.** The only outbound request is the AI change-note call to the
+- **Local-first.** Outbound requests are limited to Demo session setup and AI generation for the
   user's selected provider; nothing else leaves the browser. Keep it that way.
 - **Design tokens are the SSOT.** Every style value traces to a token in
   [`DESIGN.md`](../DESIGN.md). Don't hardcode colors/spacing.
@@ -26,6 +26,16 @@ Now** is clicked, and activation must reload the page once. The update checker
 runs on load, focus, visibility return, and every 15 minutes while visible.
 
 ## Testing
+
+Run the gateway contract and provider regression tests without dependencies:
+
+```bash
+node --test tests/gateway.test.cjs
+```
+
+These use mocked fetch/SSE responses; they do not prove live CORS, project
+registration, quotas, or upstream availability. Verify the connection from the
+registered deployment Origin before release.
 
 The diff engine is pure and testable in Node:
 

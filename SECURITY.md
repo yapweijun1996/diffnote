@@ -13,15 +13,17 @@ are no maintained release branches.
 
 ## Known limitation — API key handling
 
-This is **by design and already documented**, not a vulnerability to report:
+The Default gateway uses a short-lived Demo session held in memory. No private
+gateway or provider credential is included in its client configuration.
 
-API keys (including the built-in Default gateway key) are **XOR-obfuscated, not
-encrypted**. Because the XOR key lives in the client JavaScript, any baked-in key
-is recoverable from the page source once deployed. Treat the Default gateway key
-as a rate-limited / throwaway key, and do not store sensitive production keys in
-a public deployment. See
-[docs/CONFIGURATION.md](docs/CONFIGURATION.md#api-key-handling--security) for the
-full rationale and mitigations (rotate, rate-limit, or proxy the provider).
+User-entered keys for other providers are **XOR-obfuscated, not encrypted** in
+localStorage. This does not protect keys against same-origin scripts. Keep
+sensitive production credentials server-side.
+
+The formerly bundled private gateway key may remain in Git history and old
+browser caches; the gateway operator must revoke it. Removing it from current
+source is not credential revocation. See
+[docs/CONFIGURATION.md](docs/CONFIGURATION.md#api-key-handling--security).
 
 ## Reporting a vulnerability
 

@@ -11,7 +11,7 @@ Change Breakdown, Commit Message, Risk Notes, Test Suggestions — shown instant
 by a mock generator and then auto-upgraded by a real LLM.
 
 > 🔒 **Local-first:** files are read in-browser with `FileReader` and never
-> uploaded. The only outbound request is the AI change-note call, which sends
+> uploaded. Outbound requests create a gateway session and generate AI change notes, sending
 > the computed diff to your selected provider automatically after each
 > comparison (re-run any time with **Regenerate**).
 
@@ -49,9 +49,10 @@ automatically (re-run with **Regenerate**) → **Copy** the commit message.
 
 ## ⚠️ Security note
 
-API keys are **XOR-obfuscated, not encrypted**. The built-in Default gateway key
-is recoverable from page source once deployed — rotate it, rate-limit it, or
-proxy the provider. Details in
+The Default gateway uses a short-lived, origin-bound Demo session held only in
+memory; no private gateway key is bundled. User-entered keys for other providers
+remain **XOR-obfuscated, not encrypted**. The formerly bundled private key must
+be revoked by the gateway operator. Details in
 [docs/CONFIGURATION.md](docs/CONFIGURATION.md#api-key-handling--security).
 
 ## Project structure

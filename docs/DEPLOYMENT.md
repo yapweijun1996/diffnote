@@ -51,11 +51,18 @@ worker registers.
 
 ## ⚠️ Before deploying publicly
 
-The Default gateway API key is XOR-obfuscated **in the client source** and is
-therefore recoverable from a public deployment. Before shipping publicly:
+Default generation uses the gateway's public Demo project `github-pages`,
+registered for Origin `https://yapweijun1996.github.io` (the `/diffnote/` path is
+not part of Origin). Register exact Origins for any additional deployment;
+never put a private `gw_` or provider key in a browser bundle.
 
-1. Rotate / rate-limit the Default key, **or**
-2. Remove the baked key and require users to paste their own, **or**
-3. Front the provider with a backend proxy that holds the key server-side.
+Confirm that `/demo/session` issues a token and `/demo/v1/responses` completes
+an SSE response from the deployment Origin. Session/model checks alone do not
+prove generation works. Resolve gateway errors before release; see
+[CONFIGURATION.md](CONFIGURATION.md#default-demo-gateway).
+
+Revoke the formerly baked private key on the gateway, including when older
+PWA caches or Git history still contain it. The new service worker cache version
+refreshes the app shell through the existing user-controlled update flow.
 
 See [CONFIGURATION.md](CONFIGURATION.md#api-key-handling--security).

@@ -6,7 +6,7 @@
  *   { overview, breakdown[], commit, risks[], tests[] }
  *
  * Adapters by `cfg.api`:
- *   - 'responses'    → OpenAI Responses API (the Default gateway)
+ *   - 'demo-responses' → Demo sessions + streamed Responses (Default gateway)
  *   - 'openai-chat'  → OpenAI / LM Studio chat completions
  *   - 'gemini'       → Google Generative Language API
  */
@@ -63,26 +63,136 @@
   }
 
   // --- Adapters: each returns the assistant's raw text -----------------
-  async function callResponses(cfg, system, user) {
-    const res = await fetch(cfg.endpoint, {
+  // Session credentials stay in memory and are never written to settings/cache.
+  let demoSession = null;
+  let demoSessionPending = null;
+
+  async function demoError(res, stage) {
+    let code = '';
+    try {
+      const data = await res.json();
+      const value = data.error && data.error.code || data.code;
+      if (typeof value === 'string' && /^[A-Z0-9_]+$/.test(value)) code = value;
+    } catch (_) { /* Do not expose upstream bodies or HTML error pages. */ }
+    return new Error(`${stage}: HTTP ${res.status}${code ? ' (' + code + ')' : ''}`);
+  }
+
+  async function getDemoSession(cfg) {
+    const origin = new URL(cfg.endpoint).origin;
+    const key = `${origin}/${cfg.projectId}`;
+    if (demoSession && demoSession.key === key && Date.now() < demoSession.expiresAt) {
+      return demoSession;
+    }
+    if (demoSessionPending && demoSessionPending.key === key) return demoSessionPending.promise;
+    const promise = (async () => {
+      const res = await fetch(`${origin}/demo/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: cfg.projectId }),
+      });
+      if (!res.ok) throw await demoError(res, 'Demo session');
+      const data = await res.json();
+      if (typeof data.token !== 'string' || !data.token.startsWith('dmo_')) {
+        throw new Error('Demo session returned an invalid token.');
+      }
+      // The gateway contract gives sessions 15 minutes; refresh one minute early.
+      demoSession = { key, token: data.token, expiresAt: Date.now() + 14 * 60 * 1000 };
+      return demoSession;
+    })();
+    const pending = { key, promise };
+    demoSessionPending = pending;
+    try { return await promise; }
+    finally { if (demoSessionPending === pending) demoSessionPending = null; }
+  }
+
+  function responseText(response) {
+    return (response.output || []).filter((item) => item.type === 'message')
+      .flatMap((item) => item.content || [])
+      .filter((part) => part.type === 'output_text').map((part) => part.text).join('');
+  }
+
+  async function readDemoStream(res) {
+    if (!res.body || !(res.headers.get('content-type') || '').includes('text/event-stream')) {
+      throw new Error('Demo gateway did not return an SSE stream.');
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let text = '';
+    let completed = false;
+    function frame(raw) {
+      const data = raw.split(/\r?\n/).filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice(5).trimStart()).join('\n');
+      if (!data) return;
+      if (data === '[DONE]') {
+        if (!completed) throw new Error('Demo stream ended before response.completed.');
+        return;
+      }
+      const event = JSON.parse(data);
+      if (event.type === 'error' || event.type === 'response.failed' || event.type === 'response.incomplete') {
+        throw new Error('Demo response failed or was incomplete.');
+      }
+      if (event.type === 'response.output_text.delta') text += event.delta || '';
+      if (event.type === 'response.output_text.done' && !text) text = event.text || '';
+      if (event.type === 'response.completed') {
+        if (!event.response || event.response.status !== 'completed') {
+          throw new Error('Demo response was not completed.');
+        }
+        text = responseText(event.response) || text;
+        completed = true;
+      }
+    }
+    try {
+      while (!completed) {
+        const { value, done } = await reader.read();
+        buffer += decoder.decode(value, { stream: !done });
+        let separator;
+        while ((separator = /\r?\n\r?\n/.exec(buffer))) {
+          const raw = buffer.slice(0, separator.index);
+          buffer = buffer.slice(separator.index + separator[0].length);
+          frame(raw);
+          if (completed) break;
+        }
+        if (done) {
+          if (!completed && buffer.trim()) frame(buffer);
+          break;
+        }
+      }
+      if (!completed) throw new Error('Demo stream disconnected before completion.');
+      if (!text) throw new Error('No output_text in Demo response.');
+      return text;
+    } finally {
+      await reader.cancel().catch(() => {});
+      reader.releaseLock();
+    }
+  }
+
+  async function callDemoResponses(cfg, system, user) {
+    if (!cfg.projectId) throw new Error('No Demo project configured.');
+    let session = await getDemoSession(cfg);
+    const request = () => fetch(cfg.endpoint, {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + cfg.apiKey, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': 'Bearer ' + session.token, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: cfg.model,
         input: [
           { role: 'system', content: [{ type: 'input_text', text: system }] },
           { role: 'user', content: [{ type: 'input_text', text: user }] },
         ],
-        stream: false,
-        reasoning: { effort: 'low' },
+        stream: true,
+        reasoning: { effort: cfg.effort || 'low' },
       }),
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
-    const data = await res.json();
-    const msg = (data.output || []).find((o) => o.type === 'message');
-    const part = msg && (msg.content || []).find((c) => c.type === 'output_text');
-    if (!part) throw new Error('No output_text in response.');
-    return part.text;
+    let res = await request();
+    // Retry only an auth rejection, before any output. Never replay a started stream.
+    if (res.status === 401) {
+      if (res.body) await res.body.cancel();
+      if (demoSession === session) demoSession = null;
+      session = await getDemoSession(cfg);
+      res = await request();
+    }
+    if (!res.ok) throw await demoError(res, 'Demo response');
+    return readDemoStream(res);
   }
 
   async function callOpenAIChat(cfg, system, user) {
@@ -134,7 +244,7 @@
   }
 
   function adapterFor(api) {
-    if (api === 'responses') return callResponses;
+    if (api === 'demo-responses') return callDemoResponses;
     if (api === 'openai-chat') return callOpenAIChat;
     if (api === 'gemini') return callGemini;
     throw new Error('Unknown provider api: ' + api);
@@ -145,7 +255,7 @@
    * @param {object} opts { languageName, commitInstruction, maxLen }
    */
   async function generateNotes(cfg, diffText, fileName, opts) {
-    if (!cfg.apiKey && cfg.api !== 'openai-chat') {
+    if (!cfg.apiKey && cfg.api !== 'openai-chat' && cfg.api !== 'demo-responses') {
       throw new Error('No API key configured for this provider.');
     }
     const system = buildSystem(opts);
@@ -155,7 +265,10 @@
 
   /** Lightweight connectivity check; resolves to a short status string. */
   async function testConnection(cfg) {
-    const text = await adapterFor(cfg.api)(cfg, 'You are a connectivity probe.', 'Reply with exactly: OK');
+    const demo = cfg.api === 'demo-responses';
+    const text = await adapterFor(cfg.api)(cfg,
+      demo ? 'You are a connectivity probe. Respond with a JSON object.' : 'You are a connectivity probe.',
+      demo ? 'Reply with exactly this JSON object: {\"status\":\"OK\"}' : 'Reply with exactly: OK');
     return text.trim().slice(0, 40);
   }
 

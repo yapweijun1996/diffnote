@@ -1,14 +1,9 @@
 /**
  * DiffNote — settings + LLM provider config (Epic 2, Story 11/13).
  *
- * API keys are stored XOR-obfuscated (via the user's XORNumberCipher, key
- * below) and decrypted ONLY at call time. Persisted in localStorage.
- *
- * ⚠️ SECURITY: XOR with a hardcoded key is OBFUSCATION, not encryption. The
- * decrypt key lives in this same file, so anyone with devtools can recover
- * any baked-in key. The Default gateway key is therefore effectively public
- * once deployed — treat it as a throwaway / rate-limited key and rotate it.
- * (The upstream XOR tool itself says: do not use for tokens in production.)
+ * User-entered provider keys are XOR-obfuscated in localStorage.
+ * The default gateway uses short-lived Demo sessions and has no baked key.
+ * XOR is obfuscation, not encryption.
  */
 (function (global) {
   'use strict';
@@ -44,22 +39,18 @@
     return Math.min(COMMIT_LEN_MAX, Math.max(COMMIT_LEN_MIN, n));
   }
 
-  // gw_… key, XOR-obfuscated with XOR_KEY. Plaintext never appears in source.
-  const DEFAULT_GW_KEY_CIPHER =
-    '085071109003002001087084003002084015001086006001081000083087002004085002001086080087081002083012005081000001081002085087001082007087006087002006005000010';
-
   /**
    * Provider registry. `api` selects the request/response adapter in llm.js.
-   * `bakedKeyCipher` is only set for the Default gateway.
+   * Demo project identifiers are public configuration, never credentials.
    */
   const PROVIDERS = {
     default: {
       id: 'default',
-      label: 'Default (my GPT gateway)',
-      api: 'responses',
-      endpoint: 'https://gpt.yapweijun1996.com/v1/responses',
-      model: 'gpt-5.4-mini',
-      bakedKeyCipher: DEFAULT_GW_KEY_CIPHER,
+      label: 'Default (Demo gateway)',
+      api: 'demo-responses',
+      endpoint: 'https://gpt.yapweijun1996.com/demo/v1/responses',
+      model: 'demo-auto',
+      projectId: 'github-pages',
       keyEditable: false,
       endpointEditable: false,
       // Responses API reasoning.effort — always sent (defaults to low).
@@ -161,13 +152,13 @@
     const override = state.providers[providerId] || {};
 
     const endpoint = (base.endpointEditable && override.endpoint) ? override.endpoint : base.endpoint;
-    const model = override.model || base.model;
+    // Ignore legacy private model/key overrides when migrating the default provider.
+    const model = base.api === 'demo-responses' ? base.model : override.model || base.model;
 
-    // Key: baked (Default) takes precedence; otherwise user-entered cipher.
-    const keyCipher = base.bakedKeyCipher || override.keyCipher || '';
-    const apiKey = decryptKey(keyCipher);
+    const apiKey = base.keyEditable ? decryptKey(override.keyCipher || '') : '';
 
     const cfg = { id: base.id, label: base.label, api: base.api, endpoint, model, apiKey };
+    if (base.projectId) cfg.projectId = base.projectId;
     if (base.supportsEffort) cfg.effort = override.effort || base.effortDefault || '';
     if (base.supportsThinking) cfg.thinking = override.thinking || base.thinkingDefault || '';
     return cfg;

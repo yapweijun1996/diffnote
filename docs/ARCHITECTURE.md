@@ -14,7 +14,7 @@ via `<script>` tags; modules communicate through small globals on `window`.
 | `js/ai-mock.js` | `DiffNoteAI` | Deterministic local baseline change-note generator. |
 | `js/settings.js` | `DiffNoteSettings` | Provider registry, XOR key store, generation settings. |
 | `js/i18n.js` | `DiffNoteI18n` | Translation dictionary + `t()` / `apply()`. |
-| `js/llm.js` | `DiffNoteLLM` | Provider adapters; structured note generation. |
+| `js/llm.js` | `DiffNoteLLM` | Provider adapters; ephemeral Demo sessions, Responses SSE, structured note generation. |
 | `js/ui.js` | `DiffNoteUI`, `DiffNoteToast` | Theme, inspector tabs/drawers/resizing, UI-only layout state, toast, topbar language switch, update banner. |
 | `js/settings-ui.js` | — | Settings modal controller. |
 | `js/app.js` | `DiffNoteApp` | File handling, diff render, minimap navigation, AI generation, copy, reset. |
@@ -48,7 +48,12 @@ File inputs ──FileReader──▶ DiffNoteDiff.compute() ──▶ rows + st
 - Local baseline notes render instantly as an offline-safe fallback; the real
   LLM call then fires automatically and can be re-run via **Regenerate
   analysis**. The fallback is not exposed as a production status label.
-- **Keys are decrypted only at call time** inside `DiffNoteSettings.resolve()`.
+- User-entered provider keys are decrypted at call time inside
+  `DiffNoteSettings.resolve()`. Default has no key; `llm.js` obtains an
+  origin-bound Demo session, keeps it in memory, and consumes the Responses SSE
+  stream. Settings own public project/model configuration; the adapter owns
+  authentication refresh and stream completion. Existing rendering/fallback
+  contracts remain unchanged.
 
 ## UI V2 responsibilities
 

@@ -93,7 +93,7 @@
     // Endpoint
     const endpoint = document.createElement('input');
     endpoint.type = 'text';
-    endpoint.value = ov.endpoint || base.endpoint;
+    endpoint.value = base.endpointEditable && ov.endpoint ? ov.endpoint : base.endpoint;
     endpoint.disabled = !base.endpointEditable;
     endpoint.addEventListener('input', () => { ov.endpoint = endpoint.value; });
     providerConfig.append(field(T('settings.endpoint'), endpoint));
@@ -101,7 +101,8 @@
     // Model
     const model = document.createElement('input');
     model.type = 'text';
-    model.value = ov.model || base.model;
+    model.value = base.api === 'demo-responses' ? base.model : ov.model || base.model;
+    model.disabled = base.api === 'demo-responses';
     model.addEventListener('input', () => { ov.model = model.value; });
     providerConfig.append(field(T('settings.model'), model));
 
@@ -119,8 +120,8 @@
     } else {
       const note = document.createElement('p');
       note.className = 'muted field-note';
-      note.setAttribute('data-i18n', 'settings.bakedNote');
-      note.textContent = T('settings.bakedNote');
+      note.setAttribute('data-i18n', 'settings.demoNote');
+      note.textContent = T('settings.demoNote');
       providerConfig.append(note);
     }
 
@@ -229,12 +230,13 @@
     const base = S.PROVIDERS[id];
     const ov = draft.providers[id] || {};
     const endpoint = (base.endpointEditable && ov.endpoint) ? ov.endpoint : base.endpoint;
-    const model = ov.model || base.model;
+    const model = base.api === 'demo-responses' ? base.model : ov.model || base.model;
     let apiKey;
-    if (base.bakedKeyCipher) apiKey = S.decryptKey(base.bakedKeyCipher);
+    if (!base.keyEditable) apiKey = '';
     else if (ov._plainKey) apiKey = ov._plainKey;
     else apiKey = S.decryptKey(ov.keyCipher || '');
     const cfg = { id: base.id, label: base.label, api: base.api, endpoint, model, apiKey };
+    if (base.projectId) cfg.projectId = base.projectId;
     if (base.supportsEffort) cfg.effort = ov.effort != null ? ov.effort : base.effortDefault;
     if (base.supportsThinking) cfg.thinking = ov.thinking != null ? ov.thinking : base.thinkingDefault;
     return cfg;
