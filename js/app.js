@@ -16,6 +16,10 @@
   // snapshot that goes stale once the file is edited on disk.
   const supportsFsAccess = typeof window.showOpenFilePicker === 'function';
 
+  let pendingFileOperations = 0;
+  let fileDialogOpen = false;
+  let activeGenerations = 0;
+
   const state = {
     before: { name: null, text: null, file: null, handle: null },
     after: { name: null, text: null, file: null, handle: null },
@@ -97,6 +101,7 @@
   }
 
   async function handleFile(side, file, handle = null) {
+    pendingFileOperations++;
     const zone = document.getElementById(side === 'before' ? 'dropBefore' : 'dropAfter');
     const hint = zone.querySelector('[data-hint]');
     const nameEl = zone.querySelector('[data-filename]');
@@ -117,6 +122,8 @@
       hint.hidden = false;
       hint.textContent = err.message;
       nameEl.hidden = true;
+    } finally {
+      pendingFileOperations--;
     }
   }
 
@@ -411,6 +418,7 @@
   async function generate() {
     if (!lastResult) return;
     const active = DiffNoteSettings.getActive();
+    activeGenerations++;
     const fileName = state.after.name || state.before.name;
     const diffText = buildUnifiedDiff(lastResult.rows);
 
@@ -437,6 +445,7 @@
       warn.textContent = window.DiffNoteI18n.t('error.aiFailed', { msg: err.message });
       els.aiContent.prepend(warn);
     } finally {
+      activeGenerations--;
       if (els.inspectorPanels) els.inspectorPanels.classList.remove('is-generating');
       if (els.analysisLoading) els.analysisLoading.hidden = true;
       els.generateBtn.disabled = false;
@@ -544,6 +553,7 @@
   // Open via the File System Access picker so we keep a live handle. Must run
   // inside the user-gesture handler. Falls back to the <input> elsewhere.
   async function openWithPicker(side) {
+    pendingFileOperations++;
     try {
       const [handle] = await window.showOpenFilePicker({ multiple: false });
       const file = await handle.getFile();
@@ -551,6 +561,8 @@
     } catch (err) {
       if (err && err.name === 'AbortError') return; // user dismissed the dialog
       if (window.DiffNoteToast) window.DiffNoteToast.show(window.DiffNoteI18n.t('error.fileRead'), 'error');
+    } finally {
+      pendingFileOperations--;
     }
   }
 
@@ -561,7 +573,12 @@
     const zone = document.getElementById(zoneId);
     const input = document.getElementById(inputId);
 
-    const open = () => (supportsFsAccess ? openWithPicker(side) : input.click());
+    const open = () => {
+      if (supportsFsAccess) return openWithPicker(side);
+      fileDialogOpen = true;
+      input.click();
+    };
+    input.addEventListener('cancel', () => { fileDialogOpen = false; });
     zone.addEventListener('click', open);
     zone.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -571,6 +588,7 @@
     });
 
     input.addEventListener('change', () => {
+      fileDialogOpen = false;
       if (input.files && input.files[0]) handleFile(side, input.files[0]);
     });
 
@@ -587,20 +605,25 @@
       })
     );
     zone.addEventListener('drop', async (e) => {
-      const dt = e.dataTransfer;
-      if (!dt) return;
-      // Prefer a live handle (Chromium) so Refresh reflects later edits;
-      // fall back to the snapshot File when getAsFileSystemHandle is absent.
-      const item = dt.items && dt.items[0];
-      if (item && typeof item.getAsFileSystemHandle === 'function') {
-        const handle = await item.getAsFileSystemHandle();
-        if (handle && handle.kind === 'file') {
-          handleFile(side, await handle.getFile(), handle);
-          return;
+      pendingFileOperations++;
+      try {
+        const dt = e.dataTransfer;
+        if (!dt) return;
+        // Prefer a live handle (Chromium) so Refresh reflects later edits;
+        // fall back to the snapshot File when getAsFileSystemHandle is absent.
+        const item = dt.items && dt.items[0];
+        if (item && typeof item.getAsFileSystemHandle === 'function') {
+          const handle = await item.getAsFileSystemHandle();
+          if (handle && handle.kind === 'file') {
+            await handleFile(side, await handle.getFile(), handle);
+            return;
+          }
         }
+        const file = dt.files && dt.files[0];
+        if (file) await handleFile(side, file);
+      } finally {
+        pendingFileOperations--;
       }
-      const file = dt.files && dt.files[0];
-      if (file) handleFile(side, file);
     });
   }
 
@@ -729,6 +752,10 @@
   // Expose a minimal API for the UI shell (reset + settings live elsewhere).
   window.DiffNoteApp = {
     reset,
+    canReloadForUpdate() {
+      return pendingFileOperations === 0 && !fileDialogOpen && activeGenerations === 0 &&
+        state.before.text === null && state.after.text === null;
+    },
     // Settings panel / topbar switcher call this to relocalize live UI.
     onLanguageChange() {
       window.DiffNoteI18n.apply(document);

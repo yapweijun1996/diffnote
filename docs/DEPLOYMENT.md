@@ -31,16 +31,23 @@ deployment.
 
 ### Service worker update rollout
 
-The current worker installs a new release and waits for **Update Now** before
-activating it. GitHub Actions stamps the deployed `CACHE_VERSION` with the
-commit SHA, so every release gets a distinct offline cache.
+GitHub Actions stamps the HTML `app-version` and worker `CACHE_VERSION` with
+one visible identifier (`v11+<short commit SHA>`). Bump the local `v11` baseline
+in both source files and the deployment workflow for a new numbered release.
 
-For the first public rollout from the previous immediate-activation behavior,
-use two deployments: first ship the update UI/registration support while
-retaining the old `skipWaiting()` behavior, then ship the waiting/message-driven
-worker behavior. This gives already-open old clients time to receive the new
-registration code. Once this migration is complete, normal releases use the
-single waiting-worker flow.
+The page automatically activates an installed worker, then reloads once when
+visible and safe. Open files, file operations, AI generation, and an open
+Settings dialog delay refresh. After resetting the comparison or finishing
+settings, the page refreshes automatically. The versioned **Update Now** button
+is optional and explicitly discards the current in-memory work.
+
+Before automatic activation, the worker checks that all tabs under this app's
+scope support deferred refresh. Existing tabs running the former JavaScript do
+not respond, so the new release waits and retries automatically until those
+tabs close or load the new client through normal navigation/reopening. The old
+manual update action remains compatible. A worker cannot replace JavaScript
+already executing in a tab; this handshake prevents a new tab from forcing an
+old tab to refresh and lose its comparison during the one-time transition.
 
 ## Other static hosts
 
@@ -63,6 +70,6 @@ prove generation works. Resolve gateway errors before release; see
 
 Revoke the formerly baked private key on the gateway, including when older
 PWA caches or Git history still contain it. The new service worker cache version
-refreshes the app shell through the existing user-controlled update flow.
+refreshes the app shell through automatic activation and safe page reload.
 
 See [CONFIGURATION.md](CONFIGURATION.md#api-key-handling--security).

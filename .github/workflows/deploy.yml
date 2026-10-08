@@ -30,12 +30,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Stamp a unique service-worker cache version per deploy (the commit SHA)
-      # so clients can detect a distinct release and offer Update Now. Only the
-      # uploaded artifact is changed — the repo is untouched.
-      - name: Stamp service worker cache version
+      # Stamp the page and worker with the same visible release identifier.
+      # Only the uploaded artifact is changed — the repo is untouched.
+      - name: Stamp release version
         run: |
-          sed -i "s/const CACHE_VERSION = .*/const CACHE_VERSION = 'diffnote-${{ github.sha }}';/" sw.js
+          release="v11+${GITHUB_SHA:0:7}"
+          sed -i "s/const CACHE_VERSION = .*/const CACHE_VERSION = 'diffnote-${release}';/" sw.js
+          sed -i "s/name=\"app-version\" content=\"[^\"]*\"/name=\"app-version\" content=\"${release}\"/" index.html
           grep "CACHE_VERSION" sw.js
 
       - name: Configure Pages

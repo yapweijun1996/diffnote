@@ -1,6 +1,6 @@
 /**
  * DiffNote — UI shell controller: theme toggle, inspector layout/drawers,
- * reset, and the user-controlled service worker update prompt. Diff + AI
+ * reset, version display, and the optional service worker refresh prompt. Diff + AI
  * logic live elsewhere.
  *
  * Theme: the INITIAL theme is set by a blocking inline script in <head> to
@@ -318,6 +318,8 @@
   const updateBanner = document.getElementById('updateBanner');
   const updateBannerMessage = document.getElementById('updateBannerMessage');
   const updateNowBtn = document.getElementById('updateNowBtn');
+  const updateActionLabel = updateNowBtn && updateNowBtn.querySelector('.update-action-label');
+  const updateVersion = document.getElementById('updateVersion');
   const updateLaterBtn = document.getElementById('updateLaterBtn');
   let updateHandlers = {};
 
@@ -330,27 +332,30 @@
     applyUpdateText();
   }
   function setUpdateActions(nowKey, laterKey) {
-    if (updateNowBtn) updateNowBtn.setAttribute('data-i18n', nowKey);
+    if (updateActionLabel) updateActionLabel.setAttribute('data-i18n', nowKey);
     if (updateLaterBtn) updateLaterBtn.setAttribute('data-i18n', laterKey);
     applyUpdateText();
   }
-  function showUpdateAvailable(handlers) {
+  function showUpdateAvailable(handlers, version) {
     updateHandlers = handlers || {};
+    if (updateVersion) updateVersion.textContent = version || '';
     setUpdateMessage('pwa.updatePrompt');
     setUpdateActions('pwa.updateNow', 'pwa.updateLater');
     if (updateNowBtn) updateNowBtn.disabled = false;
     if (updateLaterBtn) { updateLaterBtn.hidden = false; updateLaterBtn.disabled = false; }
     if (updateBanner) updateBanner.hidden = false;
   }
-  function showUpdateProgress() {
+  function showUpdateProgress(version) {
+    if (updateVersion && version) updateVersion.textContent = version;
     setUpdateMessage('pwa.updating');
     setUpdateActions('pwa.updating', 'pwa.updateLater');
     if (updateNowBtn) updateNowBtn.disabled = true;
     if (updateLaterBtn) { updateLaterBtn.hidden = true; updateLaterBtn.disabled = true; }
     if (updateBanner) updateBanner.hidden = false;
   }
-  function showUpdateError(handlers) {
+  function showUpdateError(handlers, version) {
     updateHandlers = handlers || {};
+    if (updateVersion) updateVersion.textContent = version || '';
     setUpdateMessage('pwa.updateFailed');
     setUpdateActions('pwa.retryUpdate', 'pwa.dismissUpdate');
     if (updateNowBtn) updateNowBtn.disabled = false;

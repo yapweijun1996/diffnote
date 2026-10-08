@@ -18,7 +18,7 @@ via `<script>` tags; modules communicate through small globals on `window`.
 | `js/ui.js` | `DiffNoteUI`, `DiffNoteToast` | Theme, inspector tabs/drawers/resizing, UI-only layout state, toast, topbar language switch, update banner. |
 | `js/settings-ui.js` | — | Settings modal controller. |
 | `js/app.js` | `DiffNoteApp` | File handling, diff render, minimap navigation, AI generation, copy, reset. |
-| `js/sw-register.js` | — | Service worker registration, update prompt, and guarded reload. |
+| `js/sw-register.js` | — | Service worker registration, automatic activation, version discovery, and safe reload. |
 | `sw.js` | — | Network-first service worker. |
 
 ## Load order
@@ -112,13 +112,30 @@ One language setting drives both UI and generated output:
   back to cache only when offline — guaranteeing latest code online.
 - GitHub Actions stamps `CACHE_VERSION` with the deployment commit SHA so each
   release owns a distinct offline cache.
-- A new service worker installs and waits. `sw-register.js` checks for updates
-  on page load, focus, visibility return, and every 15 minutes while visible.
-- When a waiting worker is found, `js/ui.js` shows a persistent, localized
-  banner. **Update Now** sends `SKIP_WAITING`; the worker activates, claims
-  clients, and the page reloads once on `controllerchange`. **Later** hides the
-  prompt until the next focus or visibility check. Failed activation exposes a
-  retry/dismiss state.
+- `sw-register.js` checks for updates on load, focus, visibility return, and
+  every 15 minutes while visible. Installed releases activate automatically
+  through `ACTIVATE_UPDATE`; no end-user update click is required. Before
+  activation, the worker probes scoped tabs for safe-refresh support. Legacy
+  tabs delay activation until they close or load the new client; retries are
+  automatic. `SKIP_WAITING` remains for compatibility with the former manual
+  update button.
+- The page's `app-version` meta tag identifies its loaded assets. The worker
+  answers `GET_VERSION` over a MessageChannel with its cache release version.
+  GitHub Actions stamps both with the same `v11+<short commit SHA>` identifier.
+  The topbar version button optionally checks for updates; the refresh button
+  includes the target version.
+- After `controllerchange`, a visible, empty page reloads once. The app's
+  `canReloadForUpdate()` owns the file/read/picker/generation safety check;
+  an open Settings dialog also defers reload. Pending refresh checks resume
+  automatically when work is cleared or settings close. Hidden tabs wait until
+  visible. Files are not persisted or uploaded to preserve them for updates.
+- An active comparison shows an optional versioned refresh banner. **Update
+  Now** explicitly refreshes and clears in-memory work; **Later** hides the
+  banner without disabling eventual automatic refresh. Activation failures
+  retain retry/dismiss controls. First installation and already-current page
+  assets do not cause redundant reloads.
+- Activation removes only older `diffnote-` caches, preserving other apps on
+  the same GitHub Pages Origin.
 
 ## Design system
 

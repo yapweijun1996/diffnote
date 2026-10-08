@@ -19,18 +19,20 @@ python3 -m http.server 8000   # serve over localhost (required for the SW)
 # open http://localhost:8000
 ```
 
-After changing a service-worker file, reload the page once to install the local
-worker. For the full update flow, test two distinct worker versions: the first
-worker must control the page, the second must remain waiting until **Update
-Now** is clicked, and activation must reload the page once. The update checker
-runs on load, focus, visibility return, and every 15 minutes while visible.
+For update lifecycle verification, serve two distinct worker/page versions.
+Start with a controlled page, then publish the second release: it must activate
+automatically. Empty pages reload once; pages with files or an open Settings
+dialog retain their work, show the target version, and reload automatically
+when safe. Also verify first installation, offline failures, two tabs, and that
+other apps' caches are preserved. The topbar displays the loaded page version,
+not merely the newly active worker version.
 
 ## Testing
 
-Run the gateway contract and provider regression tests without dependencies:
+Run the gateway, provider regression, and PWA lifecycle tests without dependencies:
 
 ```bash
-node --test tests/gateway.test.cjs
+node --test tests/*.test.cjs
 ```
 
 These use mocked fetch/SSE responses; they do not prove live CORS, project

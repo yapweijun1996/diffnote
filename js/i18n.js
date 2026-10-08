@@ -22,7 +22,8 @@
     'topbar.language':  { en: 'Language', zh: '语言', vi: 'Ngôn ngữ', ms: 'Bahasa', ja: '言語' },
 
     'pwa.updateAvailable': { en: 'New version available', zh: '发现新版本', vi: 'Đã có phiên bản mới', ms: 'Versi baharu tersedia', ja: '新しいバージョンがあります' },
-    'pwa.updatePrompt':    { en: 'Update now to load the latest version.', zh: '立即更新以加载最新版本。', vi: 'Cập nhật ngay để tải phiên bản mới nhất.', ms: 'Kemas kini sekarang untuk memuatkan versi terkini.', ja: '今すぐ更新して最新バージョンを読み込みます。' },
+    'pwa.updatePrompt':    { en: 'Updated in the background. Refresh clears this comparison or settings draft; otherwise it will refresh automatically when you finish.', zh: '已在后台更新。立即刷新会清空当前比较或未保存设置；也可继续使用，结束后自动刷新。', vi: 'Đã cập nhật nền. Làm mới sẽ xóa so sánh hoặc cài đặt chưa lưu; ứng dụng sẽ tự làm mới khi bạn hoàn tất.', ms: 'Dikemas kini di latar. Muat semula memadam perbandingan atau tetapan belum disimpan; aplikasi akan dimuat semula apabila selesai.', ja: 'バックグラウンドで更新済みです。再読み込みで比較や未保存の設定が消去されます。作業終了後は自動で再読み込みします。' },
+    'pwa.checkUpdates':    { en: 'Check for updates', zh: '检查更新', vi: 'Kiểm tra cập nhật', ms: 'Semak kemas kini', ja: '更新を確認' },
     'pwa.updateNow':       { en: 'Update Now', zh: '立即更新', vi: 'Cập nhật ngay', ms: 'Kemas Kini Sekarang', ja: '今すぐ更新' },
     'pwa.updateLater':     { en: 'Later', zh: '稍后', vi: 'Để sau', ms: 'Kemudian', ja: '後で' },
     'pwa.updating':        { en: 'Updating…', zh: '更新中…', vi: 'Đang cập nhật…', ms: 'Sedang mengemas kini…', ja: '更新中…' },
